@@ -4,27 +4,30 @@
 
 set -e
 
+INSTALL_DIR="$HOME/.ideation-canvas"
 SKILL_DIR="$HOME/.claude/skills/canvas"
-SKILL_URL="https://raw.githubusercontent.com/mattcmorrell/ideation-canvas/main/skill/SKILL.md"
+REPO_URL="https://github.com/mattcmorrell/ideation-canvas.git"
 
 echo ""
 echo "  Ideation Canvas — Installing..."
 echo "  ─────────────────────────────────"
 
-# Create skill directory
-mkdir -p "$SKILL_DIR"
-
-# Download the skill file
-if command -v curl >/dev/null 2>&1; then
-  curl -sL "$SKILL_URL" -o "$SKILL_DIR/SKILL.md"
-elif command -v wget >/dev/null 2>&1; then
-  wget -qO "$SKILL_DIR/SKILL.md" "$SKILL_URL"
+# Clone or update the repo
+if [ -d "$INSTALL_DIR/.git" ]; then
+  echo "  Updating existing install..."
+  git -C "$INSTALL_DIR" pull -q
+  echo "  ✓ Updated canvas server"
 else
-  echo "  Error: curl or wget required"
-  exit 1
+  echo "  Downloading canvas server..."
+  git clone -q "$REPO_URL" "$INSTALL_DIR"
+  echo "  ✓ Installed canvas server to $INSTALL_DIR"
 fi
 
-echo "  ✓ Installed /canvas skill to $SKILL_DIR"
+# Install the skill
+mkdir -p "$SKILL_DIR"
+cp "$INSTALL_DIR/skill/SKILL.md" "$SKILL_DIR/SKILL.md"
+echo "  ✓ Installed /canvas skill for Claude Code"
+
 echo ""
 echo "  You're all set! Open Claude Code in any project and type:"
 echo ""

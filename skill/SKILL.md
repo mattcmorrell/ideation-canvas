@@ -76,20 +76,29 @@ sleep 1
 
 **If no server is running, or after killing the old one**, start it in the background. Try in order:
 ```bash
-# Option 1: npx (works if published to npm)
-npx ideation-canvas ./{mockup-dir} &
+# Option 1: local canvas.js in this project
+ls ./canvas.js 2>/dev/null
 
-# Option 2: local canvas.js in this project
+# Option 2: installed in ~/.ideation-canvas/
+ls ~/.ideation-canvas/canvas.js 2>/dev/null
+```
+
+Use whichever is found:
+```bash
+# If local:
 node ./canvas.js ./{mockup-dir} &
 
-# Option 3: globally installed
-ideation-canvas ./{mockup-dir} &
+# If ~/.ideation-canvas/:
+node ~/.ideation-canvas/canvas.js ./{mockup-dir} &
 ```
 
 Replace `{mockup-dir}` with the actual directory path from step 1.
 
-If none of these work, tell the user:
-> I couldn't find the canvas server. Run: `npm install -g ideation-canvas` or clone https://github.com/mattcmorrell/ideation-canvas
+If neither is found, clone it automatically:
+```bash
+git clone https://github.com/mattcmorrell/ideation-canvas.git ~/.ideation-canvas
+node ~/.ideation-canvas/canvas.js ./{mockup-dir} &
+```
 
 ### 4. Open the browser
 
