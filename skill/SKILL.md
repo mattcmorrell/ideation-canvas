@@ -66,9 +66,9 @@ curl -s http://localhost:3333/api/info 2>/dev/null
 
 The `/api/info` endpoint returns `{"dir":"/absolute/path/to/mockups","port":3333}`.
 
-**If the server is running AND serving the correct directory** → skip to step 4.
+**If the server is running AND `/api/info` returns the correct directory** → skip to step 4.
 
-**If the server is running BUT serving a different directory** → kill it and restart:
+**If the server is running BUT `/api/info` returns a different directory, returns "Not found", or fails** → it's stale or wrong. Kill it and restart:
 ```bash
 lsof -ti:3333 | xargs kill
 sleep 1
