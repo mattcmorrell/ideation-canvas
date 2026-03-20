@@ -84,6 +84,8 @@
 [data-theme="dark"] .ctx-item.danger:hover { background: #3a1a1a; }
 [data-theme="dark"] .ctx-sep { background: #333338; }
 
+[data-theme="dark"] .sidebar-empty kbd { background: #333338; border-color: #444; }
+
 [data-theme="dark"] .welcome-card { background: #242428; }
 [data-theme="dark"] .welcome-key { background: #333338; border-color: #444; }
 
@@ -331,6 +333,84 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
 .comment-thread-body:hover .comment-thread-delete { opacity: 1; }
 .comment-thread-delete:hover { background: #fee2e2; color: #ef4444; }
 
+/* ── Comment Sidebar ──────────────────────────────────────────── */
+#comment-sidebar {
+  position: fixed; top: 48px; right: 0; bottom: 0; width: 320px;
+  background: var(--toolbar-bg); border-left: 1px solid var(--toolbar-border);
+  z-index: 90; display: none; flex-direction: column;
+  font-family: var(--font); overflow: hidden;
+}
+#comment-sidebar.open { display: flex; }
+#comment-sidebar.open ~ #viewport { right: 320px; }
+
+.sidebar-header {
+  padding: 12px 16px; border-bottom: 1px solid var(--toolbar-border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sidebar-header-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.sidebar-header-count { font-size: 12px; color: var(--text-muted); margin-left: 6px; font-weight: 400; }
+.sidebar-add-btn {
+  width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--toolbar-border);
+  background: var(--toolbar-bg); color: var(--text-dim); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+  transition: all 0.15s;
+}
+.sidebar-add-btn:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+
+.sidebar-filters {
+  padding: 8px 16px; border-bottom: 1px solid var(--toolbar-border);
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.sidebar-filter-chip {
+  padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+  cursor: pointer; border: 1px solid var(--toolbar-border);
+  background: var(--toolbar-bg); color: var(--text-dim);
+  transition: all 0.15s; white-space: nowrap;
+}
+.sidebar-filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+.sidebar-filter-chip.active { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+.sidebar-filter-chip .chip-count {
+  display: inline-block; margin-left: 4px; font-weight: 400; opacity: 0.7;
+}
+
+.sidebar-body { flex: 1; overflow-y: auto; }
+
+.sidebar-group-header {
+  padding: 8px 16px 4px; font-size: 11px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.03em;
+  position: sticky; top: 0; background: var(--toolbar-bg); z-index: 1;
+}
+
+.sidebar-comment {
+  padding: 10px 16px; cursor: pointer; border-bottom: 1px solid var(--card-header-border);
+  transition: background 0.1s;
+}
+.sidebar-comment:hover { background: var(--accent-light); }
+.sidebar-comment-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.sidebar-comment-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.sidebar-comment-num.resolved { background: #aaa; }
+.sidebar-comment-time { font-size: 11px; color: var(--text-muted); }
+.sidebar-comment-text {
+  font-size: 13px; color: var(--text); line-height: 1.4;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; word-break: break-word;
+}
+.sidebar-comment.resolved { opacity: 0.5; }
+.sidebar-comment.resolved:hover { opacity: 0.8; }
+
+.sidebar-empty {
+  padding: 40px 16px; text-align: center; color: var(--text-muted); font-size: 13px;
+}
+.sidebar-empty p { margin-bottom: 8px; }
+.sidebar-empty kbd {
+  display: inline-block; padding: 2px 6px; border: 1px solid var(--toolbar-border);
+  border-radius: 4px; font-family: var(--font-mono); font-size: 11px; background: var(--card-header-bg);
+}
+
 /* ── Welcome overlay ───────────────────────────────────────────── */
 #welcome {
   position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
@@ -428,6 +508,9 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
     </button>
   </div>
 </div>
+
+<!-- ── Comment Sidebar ─────────────────────────────────────── -->
+<div id="comment-sidebar"></div>
 
 <!-- ── Viewport ──────────────────────────────────────────────── -->
 <div id="viewport">
@@ -527,6 +610,10 @@ function saveState() {
       });
     } catch (e) { console.warn('Failed to save state:', e); }
   }, 500);
+  // Refresh sidebar if open
+  if (document.getElementById('comment-sidebar')?.classList.contains('open')) {
+    requestAnimationFrame(() => { if (typeof renderCommentSidebar === 'function') renderCommentSidebar(); });
+  }
 }
 
 // ── Canvas Engine ────────────────────────────────────────────────
@@ -734,10 +821,25 @@ function createCardElement(file) {
   const header = div.querySelector('.card-header');
   setupCardDrag(div, header, file.name);
 
+  // Click header to filter sidebar to this card
+  header.addEventListener('click', (e) => {
+    if (e.target.closest('.card-action-btn')) return;
+    if (div._didDrag) return;
+    if (commentSidebar.classList.contains('open')) {
+      sidebarFilter = file.name;
+      renderCommentSidebar();
+    }
+  });
+
   // Click overlay to enter interactive mode
   const overlay = div.querySelector('.card-iframe-overlay');
   overlay.addEventListener('click', (e) => {
     e.stopPropagation();
+    if (commentSidebar.classList.contains('open')) {
+      sidebarFilter = file.name;
+      renderCommentSidebar();
+      return;
+    }
     enterInteractiveCard(div);
   });
 
@@ -791,6 +893,7 @@ function setupCardDrag(cardEl, handle, filename) {
     if (e.target.closest('.card-action-btn')) return;
     e.stopPropagation();
     dragging = true;
+    cardEl._didDrag = false;
     startX = e.clientX;
     startY = e.clientY;
     origX = parseFloat(cardEl.style.left);
@@ -804,6 +907,9 @@ function setupCardDrag(cardEl, handle, filename) {
 
   handle.addEventListener('pointermove', (e) => {
     if (!dragging) return;
+    if (Math.abs(e.clientX - startX) > 3 || Math.abs(e.clientY - startY) > 3) {
+      cardEl._didDrag = true;
+    }
     const dx = (e.clientX - startX) / state.viewport.zoom;
     const dy = (e.clientY - startY) / state.viewport.zoom;
     const newX = origX + dx;
@@ -826,12 +932,14 @@ function setupCardDrag(cardEl, handle, filename) {
 // ── Comments ─────────────────────────────────────────────────────
 
 function findCardAtPosition(canvasX, canvasY) {
-  for (const f of files) {
-    const cd = state.cards[f.name];
-    if (!cd) continue;
-    const x = cd.x, y = cd.y, w = cd.w || CARD_W, h = cd.h || (Math.round(IFRAME_H * (CARD_W / IFRAME_W)) + 36);
+  const cardEls = $$('.card', canvas);
+  for (const el of cardEls) {
+    const x = parseFloat(el.style.left);
+    const y = parseFloat(el.style.top);
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
     if (canvasX >= x && canvasX <= x + w && canvasY >= y && canvasY <= y + h) {
-      return f.name;
+      return el.dataset.file;
     }
   }
   return null;
@@ -1102,7 +1210,162 @@ function refreshCommentNumbers() {
 function setAddingComment(val) {
   addingComment = val;
   viewport.classList.toggle('adding-comment', val);
-  $('#btn-comment').classList.toggle('active', val);
+}
+
+// ── Comment Sidebar ──────────────────────────────────────────────
+const commentSidebar = $('#comment-sidebar');
+let sidebarFilter = null; // null = all, string = cardFile filter
+
+function toggleCommentSidebar() {
+  const isOpen = commentSidebar.classList.toggle('open');
+  $('#btn-comment').classList.toggle('active', isOpen);
+  if (isOpen) {
+    sidebarFilter = null;
+    renderCommentSidebar();
+  }
+}
+
+function closeCommentSidebar() {
+  commentSidebar.classList.remove('open');
+  $('#btn-comment').classList.remove('active');
+}
+
+function renderCommentSidebar() {
+  // Re-associate any comments missing cardFile
+  for (const c of state.comments) {
+    if (!c.cardFile) c.cardFile = findCardAtPosition(c.x, c.y);
+  }
+  const comments = state.comments.filter(c => c.text); // Only show comments with text
+  const filtered = sidebarFilter ? comments.filter(c => c.cardFile === sidebarFilter) : comments;
+
+  // Group by cardFile
+  const groups = {};
+  const unattached = [];
+  for (const c of comments) {
+    if (c.cardFile) {
+      if (!groups[c.cardFile]) groups[c.cardFile] = [];
+      groups[c.cardFile].push(c);
+    } else {
+      unattached.push(c);
+    }
+  }
+
+  // Build filter chips
+  const cardNames = Object.keys(groups).sort();
+  const chipHtml = cardNames.length > 0 ? `
+    <div class="sidebar-filters">
+      <span class="sidebar-filter-chip${sidebarFilter === null ? ' active' : ''}" data-filter="all">
+        All<span class="chip-count">${comments.length}</span>
+      </span>
+      ${cardNames.map(name => `
+        <span class="sidebar-filter-chip${sidebarFilter === name ? ' active' : ''}" data-filter="${escHtml(name)}">
+          ${escHtml(name.replace(/\.html$/, ''))}<span class="chip-count">${groups[name].length}</span>
+        </span>
+      `).join('')}
+      ${unattached.length ? `
+        <span class="sidebar-filter-chip${sidebarFilter === '__canvas__' ? ' active' : ''}" data-filter="__canvas__">
+          Canvas<span class="chip-count">${unattached.length}</span>
+        </span>
+      ` : ''}
+    </div>
+  ` : '';
+
+  // Build comment list
+  let listHtml = '';
+  if (filtered.length === 0) {
+    listHtml = `
+      <div class="sidebar-empty">
+        <p>No comments yet</p>
+        <p>Press <kbd>C</kbd> to add one</p>
+      </div>
+    `;
+  } else if (sidebarFilter) {
+    // Flat list when filtered
+    listHtml = filtered.map(c => renderSidebarComment(c)).join('');
+  } else {
+    // Grouped when showing all
+    for (const name of cardNames) {
+      listHtml += `<div class="sidebar-group-header">${escHtml(name.replace(/\.html$/, ''))}</div>`;
+      listHtml += groups[name].map(c => renderSidebarComment(c)).join('');
+    }
+    if (unattached.length) {
+      listHtml += `<div class="sidebar-group-header">Canvas</div>`;
+      listHtml += unattached.map(c => renderSidebarComment(c)).join('');
+    }
+  }
+
+  commentSidebar.innerHTML = `
+    <div class="sidebar-header">
+      <span>
+        <span class="sidebar-header-title">Comments</span>
+        <span class="sidebar-header-count">${comments.length}</span>
+      </span>
+      <button class="sidebar-add-btn" title="Add comment (C)">+</button>
+    </div>
+    ${chipHtml}
+    <div class="sidebar-body">${listHtml}</div>
+  `;
+
+  // Wire filter chips
+  commentSidebar.querySelectorAll('.sidebar-filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const f = chip.dataset.filter;
+      if (f === 'all') sidebarFilter = null;
+      else if (f === '__canvas__') sidebarFilter = '__canvas__';
+      else sidebarFilter = f;
+      renderCommentSidebar();
+    });
+  });
+
+  // Handle __canvas__ filter
+  if (sidebarFilter === '__canvas__') {
+    // Re-filter for unattached only
+    const canvasFiltered = comments.filter(c => !c.cardFile);
+    const body = commentSidebar.querySelector('.sidebar-body');
+    if (canvasFiltered.length === 0) {
+      body.innerHTML = '<div class="sidebar-empty"><p>No canvas comments</p></div>';
+    } else {
+      body.innerHTML = canvasFiltered.map(c => renderSidebarComment(c)).join('');
+    }
+  }
+
+  // Wire comment clicks — navigate to comment on canvas
+  commentSidebar.querySelectorAll('.sidebar-comment').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      const cd = state.comments.find(c => c.id === id);
+      if (!cd) return;
+      // Pan canvas to center on this comment
+      const vpW = viewport.clientWidth;
+      const vpH = viewport.clientHeight;
+      state.viewport.x = vpW / 2 - cd.x * state.viewport.zoom;
+      state.viewport.y = vpH / 2 - cd.y * state.viewport.zoom;
+      updateTransform();
+      saveState();
+      // Open the thread
+      openCommentThread(id);
+    });
+  });
+
+  // Wire add button
+  const addBtn = commentSidebar.querySelector('.sidebar-add-btn');
+  addBtn.addEventListener('click', () => {
+    setAddingComment(true);
+  });
+}
+
+function renderSidebarComment(c) {
+  const num = getCommentNumber(c.id);
+  const preview = c.text.length > 80 ? c.text.slice(0, 80) + '...' : c.text;
+  return `
+    <div class="sidebar-comment${c.resolved ? ' resolved' : ''}" data-id="${c.id}">
+      <div class="sidebar-comment-top">
+        <span class="sidebar-comment-num${c.resolved ? ' resolved' : ''}">${num}</span>
+        <span class="sidebar-comment-time">${formatTime(c.timestamp)}</span>
+      </div>
+      <div class="sidebar-comment-text">${escHtml(preview)}</div>
+    </div>
+  `;
 }
 
 // ── Annotations (per-card) ────────────────────────────────────────
@@ -1479,7 +1742,7 @@ $('#btn-layout').addEventListener('click', autoLayout);
 $('#btn-fit').addEventListener('click', fitAll);
 $('#btn-zoom-in').addEventListener('click', () => zoomTo(state.viewport.zoom * 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2));
 $('#btn-zoom-out').addEventListener('click', () => zoomTo(state.viewport.zoom / 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2));
-$('#btn-comment').addEventListener('click', () => setAddingComment(!addingComment));
+$('#btn-comment').addEventListener('click', toggleCommentSidebar);
 $('#btn-theme').addEventListener('click', toggleTheme);
 
 // ── Welcome ──────────────────────────────────────────────────────
