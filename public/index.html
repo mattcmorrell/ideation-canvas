@@ -894,6 +894,8 @@ function setupCardDrag(cardEl, handle, filename) {
     e.stopPropagation();
     dragging = true;
     cardEl._didDrag = false;
+    cardEl._lastDx = 0;
+    cardEl._lastDy = 0;
     startX = e.clientX;
     startY = e.clientY;
     origX = parseFloat(cardEl.style.left);
@@ -917,11 +919,17 @@ function setupCardDrag(cardEl, handle, filename) {
     cardEl.style.left = newX + 'px';
     cardEl.style.top = newY + 'px';
     state.cards[filename] = { x: newX, y: newY };
+    // Move attached comment pins with the card
+    moveAttachedComments(filename, dx - (cardEl._lastDx || 0), dy - (cardEl._lastDy || 0));
+    cardEl._lastDx = dx;
+    cardEl._lastDy = dy;
   });
 
   handle.addEventListener('pointerup', (e) => {
     if (!dragging) return;
     dragging = false;
+    cardEl._lastDx = 0;
+    cardEl._lastDy = 0;
     cardEl.classList.remove('dragging');
     handle.classList.remove('dragging');
     updateGroupVisuals();
@@ -930,6 +938,19 @@ function setupCardDrag(cardEl, handle, filename) {
 }
 
 // ── Comments ─────────────────────────────────────────────────────
+
+function moveAttachedComments(cardFile, dx, dy) {
+  for (const c of state.comments) {
+    if (c.cardFile !== cardFile) continue;
+    c.x += dx;
+    c.y += dy;
+    const pinEl = $(`.comment-pin[data-id="${CSS.escape(c.id)}"]`);
+    if (pinEl) {
+      pinEl.style.left = c.x + 'px';
+      pinEl.style.top = (c.y - 28) + 'px';
+    }
+  }
+}
 
 function findCardAtPosition(canvasX, canvasY) {
   const cardEls = $$('.card', canvas);
