@@ -21,50 +21,74 @@ Launch an infinite canvas for creating, reviewing, and iterating on HTML mockups
 
 When the user invokes `/canvas` or `/canvas start`:
 
-### 1. Find or create the mockups directory
+### 1. Discover existing mockup files
 
-Look for a `mockups/` directory in the project root. If it doesn't exist, create it:
+Search the project for HTML files that look like mockups. Run these searches:
 
 ```bash
-mkdir -p mockups
+# Check for common mockup directories
+ls -d mockups/ public/mockups/ designs/ public/designs/ 2>/dev/null
+
+# Find standalone HTML files (skip framework/build output)
+find . -name "*.html" -not -path "*/node_modules/*" -not -path "*/dist/*" -not -path "*/build/*" -not -path "*/.next/*" -not -path "*/coverage/*" -not -path "*/.git/*" -not -name "index.html" -not -name "404.html" | head -30
 ```
 
-### 2. Start the canvas server (if not already running)
+**Decision logic:**
+
+1. **Dedicated mockup directory exists** (e.g., `mockups/`, `public/mockups/`, `designs/`):
+   → Use it. Tell the user: "Found your mockups in `mockups/` — starting the canvas."
+
+2. **HTML files found in a single directory** (e.g., 3+ `.html` files in `src/pages/`):
+   → Ask the user: "I found HTML files in `src/pages/`. Should I use that directory, or create a new `mockups/` folder?"
+
+3. **HTML files scattered across the project**:
+   → Ask the user which ones to include, or suggest creating a `mockups/` directory and copying/symlinking the relevant files.
+
+4. **No HTML files found**:
+   → Create `mockups/` and tell the user: "Created `mockups/` — I'll put all mockups there."
+
+**Important:** Do NOT silently create a new directory if mockup files already exist elsewhere in the project. Always prefer using existing work.
+
+### 2. Remember the mockup directory
+
+Once discovered, store the chosen directory path. Use it for all future mockup operations in this session. If a `.canvas-state.json` already exists in the chosen directory, the canvas will restore previous positions and comments.
+
+### 3. Start the canvas server (if not already running)
 
 Check if port 3333 is in use:
 ```bash
 lsof -ti:3333
 ```
 
-If not running, start it in the background:
+If not running, start it in the background. Try in order:
 ```bash
-npx ideation-canvas ./mockups &
+# Option 1: npx (works if published to npm)
+npx ideation-canvas ./{mockup-dir} &
+
+# Option 2: local canvas.js in this project
+node ./canvas.js ./{mockup-dir} &
+
+# Option 3: globally installed
+ideation-canvas ./{mockup-dir} &
 ```
 
-If `npx ideation-canvas` is not available, fall back to checking for canvas.js:
-```bash
-# Check common locations
-ls ./canvas.js ./node_modules/.bin/ideation-canvas 2>/dev/null
-```
+Replace `{mockup-dir}` with the actual directory path from step 1.
 
-If found locally, use `node canvas.js ./mockups &`.
+If none of these work, tell the user:
+> I couldn't find the canvas server. Run: `npm install -g ideation-canvas` or clone https://github.com/mattcmorrell/ideation-canvas
 
-If nothing is found, tell the user:
-> Install ideation-canvas first: `npm install -g ideation-canvas` or `npx ideation-canvas setup`
-
-### 3. Open the browser
+### 4. Open the browser
 
 ```bash
 open http://localhost:3333  # macOS
 ```
 
-### 4. Confirm
+### 5. Confirm
 
-Tell the user the canvas is running and ready. Remind them:
-- **C** to add a comment on the canvas
-- **Space + drag** to pan
-- **Scroll** to zoom
-- Click the **Comment** button to see all comments in a sidebar
+Tell the user the canvas is running. Show them:
+- How many mockup files were found
+- The directory being watched
+- Quick controls: **C** to comment, **Space + drag** to pan, **Scroll** to zoom, **Comment** button for sidebar
 
 ## Creating Mockups
 
@@ -72,10 +96,10 @@ When the user asks you to create mockups, designs, or variations:
 
 ### File convention
 
-Write all mockups to the `mockups/` directory in the project root. Use this naming pattern:
+Write all mockups to the **same directory the canvas is watching** (discovered in step 1 of startup). Use this naming pattern:
 
-- `mockups/{name}.html` — single mockup
-- `mockups/{name}-v1.html`, `mockups/{name}-v2.html` — variations (auto-grouped on canvas)
+- `{dir}/{name}.html` — single mockup
+- `{dir}/{name}-v1.html`, `{dir}/{name}-v2.html` — variations (auto-grouped on canvas)
 
 ### Mockup format
 
@@ -111,8 +135,9 @@ When the user invokes `/canvas review`:
 
 ### 1. Read the canvas state
 
+Read `.canvas-state.json` from the mockup directory the canvas is watching:
 ```bash
-cat mockups/.canvas-state.json
+cat {mockup-dir}/.canvas-state.json
 ```
 
 ### 2. Extract comments
@@ -165,5 +190,5 @@ Do NOT create new files unless the feedback calls for a new variant. Update in p
 
 - The canvas server watches for file changes and pushes updates via SSE — edits appear instantly
 - Comments have `cardFile` set to the mockup filename — use this to know which file the feedback is about
-- The `.canvas-state.json` file is in the mockups directory, not the project root
+- The `.canvas-state.json` file is in the watched mockup directory, not the project root
 - Mockup files should be beautiful and production-quality by default — use good typography, spacing, and color
