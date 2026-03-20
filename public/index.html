@@ -8,7 +8,7 @@
 /* ── Variables ─────────────────────────────────────────────────── */
 :root {
   --bg: #f0efe9;
-  --dot: #d4d3cd;
+  --dot: #c5c4be;
   --toolbar-bg: #ffffff;
   --toolbar-border: #e5e4de;
   --card-bg: #ffffff;
@@ -38,7 +38,7 @@
 /* ── Dark Mode ────────────────────────────────────────────────── */
 [data-theme="dark"] {
   --bg: #1a1a1e;
-  --dot: #2a2a2e;
+  --dot: #3a3a40;
   --toolbar-bg: #222226;
   --toolbar-border: #333338;
   --card-bg: #242428;
@@ -130,8 +130,8 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
   position: fixed; top: 48px; left: 0; right: 0; bottom: 0;
   overflow: hidden; cursor: default;
   background-color: var(--bg);
-  background-image: radial-gradient(var(--dot) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image: radial-gradient(var(--dot) 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
 }
 #viewport.panning { cursor: grabbing; }
 
@@ -151,7 +151,7 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
 }
 .card:hover { box-shadow: var(--card-shadow-hover); }
 .card.dragging { box-shadow: var(--card-shadow-drag); z-index: 50; transition: none; }
-.card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light), var(--card-shadow-hover); }
+.card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light), var(--card-shadow-hover); transition: none; }
 .card.interactive { border-color: var(--accent); }
 .card.flash-update { animation: flashBorder 1s ease; }
 
@@ -164,8 +164,9 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
   height: 36px; padding: 0 10px; background: var(--card-header-bg);
   border-bottom: 1px solid var(--card-header-border);
   display: flex; align-items: center; justify-content: space-between;
-  cursor: grab; user-select: none;
+  cursor: default; user-select: none;
 }
+#viewport.adding-comment .card-header { cursor: inherit; }
 .card-header.dragging { cursor: grabbing; }
 .card-title {
   font-size: 12px; font-weight: 600; color: var(--text); overflow: hidden;
@@ -208,7 +209,10 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
 .card.interactive .card-iframe-wrap iframe { pointer-events: auto; }
 
 .card-iframe-overlay {
-  position: absolute; inset: 0; z-index: 1; cursor: pointer;
+  position: absolute; inset: 0; z-index: 1; cursor: default;
+}
+#viewport.adding-comment .card-iframe-overlay {
+  cursor: inherit;
 }
 .card.interactive .card-iframe-overlay { display: none; }
 
@@ -264,7 +268,8 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
 .comment-pin:hover .comment-pin-preview { display: block; }
 .comment-pin.active .comment-pin-preview { display: none; }
 
-#viewport.adding-comment { cursor: crosshair; }
+#viewport.adding-comment { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%233b82f6' stroke='white' stroke-width='1.5'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E") 4 20, crosshair; }
+[data-theme="dark"] #viewport.adding-comment { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='%2360a5fa' stroke='white' stroke-width='1.5'%3E%3Cpath d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/%3E%3C/svg%3E") 4 20, crosshair; }
 
 /* ── Comment Thread ──────────────────────────────────────────── */
 .comment-thread {
@@ -332,6 +337,22 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
 }
 .comment-thread-body:hover .comment-thread-delete { opacity: 1; }
 .comment-thread-delete:hover { background: #fee2e2; color: #ef4444; }
+
+/* ── Hint Bar ─────────────────────────────────────────────────── */
+#hint-bar {
+  position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+  z-index: 95; display: flex; gap: 16px; align-items: center;
+  background: var(--toolbar-bg); border: 1px solid var(--toolbar-border);
+  border-radius: 8px; padding: 6px 16px;
+  font-size: 12px; color: var(--text);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  pointer-events: none; opacity: 0.8;
+}
+#hint-bar kbd {
+  display: inline-block; padding: 1px 5px; border: 1px solid var(--toolbar-border);
+  border-radius: 3px; font-family: var(--font-mono); font-size: 11px;
+  background: var(--card-header-bg); color: var(--text-dim); margin-right: 3px;
+}
 
 /* ── Comment Sidebar ──────────────────────────────────────────── */
 #comment-sidebar {
@@ -509,6 +530,13 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
   </div>
 </div>
 
+<!-- ── Hint Bar ───────────────────────────────────────────── -->
+<div id="hint-bar">
+  <span><kbd>C</kbd> Comment</span>
+  <span><kbd>Space</kbd> Hold to pan</span>
+  <span><kbd>Scroll</kbd> Zoom</span>
+</div>
+
 <!-- ── Comment Sidebar ─────────────────────────────────────── -->
 <div id="comment-sidebar"></div>
 
@@ -562,6 +590,7 @@ const state = {
 
 let files = [];
 let interactiveCard = null;
+let selectedCard = null;
 let selectedComment = null;
 let openThread = null; // currently open comment thread element
 let addingComment = false;
@@ -726,12 +755,10 @@ document.addEventListener('pointerdown', (e) => {
 
 viewport.addEventListener('pointerdown', (e) => {
   if (e.target !== viewport && e.target !== canvas) return;
-  isPanning = true;
-  panStart = { x: e.clientX - state.viewport.x, y: e.clientY - state.viewport.y };
-  viewport.classList.add('panning');
-  viewport.setPointerCapture(e.pointerId);
+  // No auto-pan — panning is Space+drag only (Figma behavior)
   closeCommentThread();
   deselectComment();
+  deselectCard();
   exitInteractiveCard();
 });
 
@@ -821,26 +848,26 @@ function createCardElement(file) {
   const header = div.querySelector('.card-header');
   setupCardDrag(div, header, file.name);
 
-  // Click header to filter sidebar to this card
+  // Click header to select card and filter sidebar
   header.addEventListener('click', (e) => {
     if (e.target.closest('.card-action-btn')) return;
     if (div._didDrag) return;
+    selectCard(div);
     if (commentSidebar.classList.contains('open')) {
       sidebarFilter = file.name;
       renderCommentSidebar();
     }
   });
 
-  // Click overlay to enter interactive mode
+  // Click overlay to select, double-click to enter interactive mode
   const overlay = div.querySelector('.card-iframe-overlay');
   overlay.addEventListener('click', (e) => {
     e.stopPropagation();
+    selectCard(div);
     if (commentSidebar.classList.contains('open')) {
       sidebarFilter = file.name;
       renderCommentSidebar();
-      return;
     }
-    enterInteractiveCard(div);
   });
 
   // Annotation button
@@ -869,6 +896,19 @@ function createCardElement(file) {
   });
 
   return div;
+}
+
+function selectCard(cardEl) {
+  deselectCard();
+  selectedCard = cardEl;
+  cardEl.classList.add('selected');
+}
+
+function deselectCard() {
+  if (selectedCard) {
+    selectedCard.classList.remove('selected');
+    selectedCard = null;
+  }
 }
 
 function enterInteractiveCard(cardEl) {
@@ -1589,34 +1629,23 @@ function autoLayout() {
   const grouped = new Set(Object.values(groups).flat());
   const ungrouped = files.filter(f => !grouped.has(f.name));
 
-  let cursorX = 60;
+  const startX = 60;
   let cursorY = 60;
   const scale = CARD_W / IFRAME_W;
   const cardH = Math.round(IFRAME_H * scale) + 36; // +header
 
-  // Layout groups first
+  // Layout groups as rows — each idea is a row, versions are columns
   for (const [groupName, fileNames] of Object.entries(groups)) {
     for (let i = 0; i < fileNames.length; i++) {
-      state.cards[fileNames[i]] = { x: cursorX + i * (CARD_W + CARD_GAP), y: cursorY };
+      state.cards[fileNames[i]] = { x: startX + i * (CARD_W + CARD_GAP), y: cursorY };
     }
-    cursorX += fileNames.length * (CARD_W + CARD_GAP) + GROUP_GAP;
+    cursorY += cardH + GROUP_GAP;
   }
 
-  // Layout ungrouped in a grid
-  if (ungrouped.length > 0) {
-    if (Object.keys(groups).length > 0) {
-      cursorX = 60;
-      cursorY += cardH + GROUP_GAP;
-    }
-    const cols = Math.max(1, Math.floor((viewport.clientWidth - 120) / (CARD_W + CARD_GAP)));
-    ungrouped.forEach((f, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      state.cards[f.name] = {
-        x: cursorX + col * (CARD_W + CARD_GAP),
-        y: cursorY + row * (cardH + CARD_GAP),
-      };
-    });
+  // Layout ungrouped below, each on its own row (single-version ideas)
+  for (const f of ungrouped) {
+    state.cards[f.name] = { x: startX, y: cursorY };
+    cursorY += cardH + GROUP_GAP;
   }
 
   // Apply positions to DOM
@@ -1625,6 +1654,22 @@ function autoLayout() {
     if (cardEl && state.cards[f.name]) {
       cardEl.style.left = state.cards[f.name].x + 'px';
       cardEl.style.top = state.cards[f.name].y + 'px';
+    }
+  }
+
+  // Move attached comments with their cards
+  for (const f of files) {
+    const cd = state.cards[f.name];
+    if (cd) {
+      state.comments.forEach(c => {
+        if (c.cardFile === f.name) {
+          const pinEl = $(`.comment-pin[data-id="${CSS.escape(c.id)}"]`);
+          if (pinEl) {
+            pinEl.style.left = c.x + 'px';
+            pinEl.style.top = (c.y - 28) + 'px';
+          }
+        }
+      });
     }
   }
 
@@ -1737,6 +1782,7 @@ document.addEventListener('keydown', (e) => {
       break;
     case 'Escape':
       exitInteractiveCard();
+      deselectCard();
       closeCommentThread();
       setAddingComment(false);
       ctxMenu.classList.remove('show');
