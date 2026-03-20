@@ -26,9 +26,6 @@
   --accent-light: rgba(59,130,246,0.1);
   --group-bg: rgba(59,130,246,0.04);
   --group-border: rgba(59,130,246,0.15);
-  --sticky-bg: #fef3c7;
-  --sticky-border: #f5e6a3;
-  --sticky-shadow: 0 2px 8px rgba(0,0,0,0.1);
   --anno-note: #8b5cf6;
   --anno-love: #10b981;
   --anno-fix: #ef4444;
@@ -37,6 +34,64 @@
   --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
 }
+
+/* ── Dark Mode ────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg: #1a1a1e;
+  --dot: #2a2a2e;
+  --toolbar-bg: #222226;
+  --toolbar-border: #333338;
+  --card-bg: #242428;
+  --card-border: #333338;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2);
+  --card-shadow-hover: 0 4px 24px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.25);
+  --card-shadow-drag: 0 12px 40px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3);
+  --card-header-bg: #2a2a2e;
+  --card-header-border: #333338;
+  --text: #e8e8ec;
+  --text-dim: #aaa;
+  --text-muted: #999;
+  --accent: #60a5fa;
+  --accent-light: rgba(96,165,250,0.15);
+  --group-bg: rgba(96,165,250,0.06);
+  --group-border: rgba(96,165,250,0.2);
+  --anno-note: #a78bfa;
+  --anno-love: #34d399;
+  --anno-fix: #f87171;
+  --anno-idea: #fbbf24;
+  --anno-question: #60a5fa;
+}
+
+[data-theme="dark"] .toolbar-btn:hover { background: #333338; color: var(--text); border-color: #555; }
+
+[data-theme="dark"] .comment-thread { background: #242428; border-color: #333338; }
+[data-theme="dark"] .comment-thread-header { border-color: #333338; }
+[data-theme="dark"] .comment-thread-close { color: #999; }
+[data-theme="dark"] .comment-thread-close:hover { background: #333338; color: var(--text); }
+[data-theme="dark"] .comment-thread-body { border-color: #333338; }
+[data-theme="dark"] .comment-thread-text { color: var(--text); }
+[data-theme="dark"] .comment-thread-input { background: #1a1a1e; border-color: #444; color: var(--text); }
+[data-theme="dark"] .comment-thread-input::placeholder { color: #666; }
+[data-theme="dark"] .comment-resolve:hover { background: #333338; }
+[data-theme="dark"] .comment-pin.resolved { background: #444; border-color: #555; }
+
+[data-theme="dark"] .card-action-btn:hover { background: rgba(255,255,255,0.08); }
+[data-theme="dark"] .card-iframe-wrap iframe { background: #fff; }
+
+
+[data-theme="dark"] #context-menu { background: #242428; border-color: #333338; }
+[data-theme="dark"] .ctx-item:hover { background: #333338; }
+[data-theme="dark"] .ctx-item.danger:hover { background: #3a1a1a; }
+[data-theme="dark"] .ctx-sep { background: #333338; }
+
+[data-theme="dark"] .welcome-card { background: #242428; }
+[data-theme="dark"] .welcome-key { background: #333338; border-color: #444; }
+
+[data-theme="dark"] .empty-card code { background: rgba(255,255,255,0.08); }
+
+[data-theme="dark"] .card-badge { background: rgba(96,165,250,0.15); color: #60a5fa; }
+[data-theme="dark"] .card-badge.version { background: rgba(167,139,250,0.15); color: #a78bfa; }
+[data-theme="dark"] .card-badge.tabs { background: rgba(52,211,153,0.15); color: #34d399; }
 
 /* ── Reset ─────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -71,13 +126,12 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
 /* ── Viewport & Canvas ─────────────────────────────────────────── */
 #viewport {
   position: fixed; top: 48px; left: 0; right: 0; bottom: 0;
-  overflow: hidden; cursor: grab;
+  overflow: hidden; cursor: default;
   background-color: var(--bg);
   background-image: radial-gradient(var(--dot) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 #viewport.panning { cursor: grabbing; }
-#viewport.adding-note { cursor: crosshair; }
 
 #canvas {
   position: absolute; top: 0; left: 0;
@@ -176,103 +230,106 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
   text-transform: uppercase;
 }
 
-/* ── Sticky Notes ──────────────────────────────────────────────── */
-.sticky {
-  position: absolute; min-width: 160px; max-width: 260px;
-  background: var(--sticky-bg); border: 1px solid var(--sticky-border);
-  border-radius: 4px; box-shadow: var(--sticky-shadow);
-  padding: 10px 12px; cursor: grab; user-select: none;
-  font-size: 13px; line-height: 1.5; color: #92400e;
-  transition: box-shadow 0.2s;
+/* ── Comment Pins ─────────────────────────────────────────────── */
+.comment-pin {
+  position: absolute; width: 28px; height: 28px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--accent); border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  cursor: pointer; user-select: none; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  transform: rotate(-45deg);
+  transform-origin: center center;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
-.sticky:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.14); }
-.sticky.dragging { box-shadow: 0 8px 24px rgba(0,0,0,0.18); cursor: grabbing; z-index: 50; }
-.sticky.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
-.sticky.editing { cursor: text; user-select: text; }
-
-.sticky-color-blue { --sticky-bg: #dbeafe; --sticky-border: #a8c8f5; color: #1e40af; }
-.sticky-color-green { --sticky-bg: #dcfce7; --sticky-border: #a3e4b8; color: #166534; }
-.sticky-color-pink { --sticky-bg: #fce7f3; --sticky-border: #f0b4d4; color: #9d174d; }
-.sticky-color-purple { --sticky-bg: #f3e8ff; --sticky-border: #d4b4f5; color: #6b21a8; }
-
-.sticky-delete {
-  position: absolute; top: -8px; right: -8px; width: 20px; height: 20px;
-  border-radius: 50%; background: #ef4444; color: #fff; border: 2px solid var(--bg);
-  font-size: 11px; cursor: pointer; display: none; align-items: center; justify-content: center;
-  line-height: 1;
+.comment-pin:hover { transform: rotate(-45deg) scale(1.15); box-shadow: 0 4px 12px rgba(0,0,0,0.25); z-index: 11; }
+.comment-pin.active { transform: rotate(-45deg) scale(1.15); box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 55; }
+.comment-pin.resolved { background: #aaa; border-color: #ddd; opacity: 0.6; }
+.comment-pin.resolved:hover { opacity: 0.9; }
+.comment-pin-number {
+  transform: rotate(45deg);
+  font-size: 11px; font-weight: 700; color: #fff; line-height: 1;
+  pointer-events: none;
 }
-.sticky:hover .sticky-delete { display: flex; }
-
-.sticky-color-picker {
-  position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
-  display: none; gap: 3px; background: #fff; padding: 3px 6px;
-  border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 1px solid #e5e5e5;
+.comment-pin .comment-pin-preview {
+  display: none; position: absolute; left: 36px; top: -4px;
+  transform: rotate(45deg);
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 6px; padding: 6px 10px; font-size: 12px; color: var(--text);
+  white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12); pointer-events: none; z-index: 100;
 }
-.sticky:hover .sticky-color-picker { display: flex; }
-.sticky-color-dot {
-  width: 12px; height: 12px; border-radius: 50%; cursor: pointer; border: 1.5px solid rgba(0,0,0,0.1);
-  transition: transform 0.1s;
-}
-.sticky-color-dot:hover { transform: scale(1.3); }
+.comment-pin:hover .comment-pin-preview { display: block; }
+.comment-pin.active .comment-pin-preview { display: none; }
 
-/* ── Annotation Panel ──────────────────────────────────────────── */
-.anno-panel {
-  position: absolute; width: 280px; background: #fff; border: 1px solid #e5e5e5;
-  border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); z-index: 60;
+#viewport.adding-comment { cursor: crosshair; }
+
+/* ── Comment Thread ──────────────────────────────────────────── */
+.comment-thread {
+  position: fixed; width: 280px; background: #fff; border: 1px solid #e5e5e5;
+  border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); z-index: 60;
   font-size: 13px; overflow: hidden;
 }
-.anno-panel-header {
+.comment-thread-header {
   padding: 10px 12px; border-bottom: 1px solid #f0f0f0;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; gap: 8px;
   font-size: 12px; font-weight: 700; color: var(--text);
 }
-.anno-panel-close {
+.comment-thread-header-left { flex: 1; display: flex; align-items: center; gap: 6px; }
+.comment-thread-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.comment-thread-time { font-size: 11px; font-weight: 400; color: var(--text-muted); }
+.comment-resolve {
+  width: 26px; height: 26px; border: none; border-radius: 4px; background: transparent;
+  color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.1s;
+}
+.comment-resolve:hover { background: #f0f0f0; color: #10b981; }
+.comment-resolve.resolved { color: #10b981; }
+.comment-resolve svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+.comment-thread-close {
   width: 22px; height: 22px; border: none; border-radius: 4px; background: transparent;
   color: #999; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
 }
-.anno-panel-close:hover { background: #f5f5f5; color: var(--text); }
-.anno-panel-body { max-height: 260px; overflow-y: auto; }
-
-.anno-entry {
-  padding: 8px 12px; border-bottom: 1px solid #f8f8f8;
-  display: flex; gap: 8px; align-items: flex-start;
+.comment-thread-close:hover { background: #f5f5f5; color: var(--text); }
+.comment-thread-body {
+  padding: 12px; max-height: 300px; overflow-y: auto;
 }
-.anno-entry:last-child { border-bottom: none; }
-.anno-dot {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+.comment-thread-text {
+  font-size: 13px; line-height: 1.5; color: var(--text); white-space: pre-wrap; word-break: break-word;
 }
-.anno-entry-text { flex: 1; color: var(--text); line-height: 1.5; font-size: 13px; }
-.anno-entry-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.anno-entry-delete {
-  width: 18px; height: 18px; border: none; background: transparent; color: #ccc;
-  cursor: pointer; font-size: 13px; border-radius: 3px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
+.comment-thread-empty {
+  padding: 12px; text-align: center; color: #bbb; font-size: 13px;
 }
-.anno-entry-delete:hover { background: #fee2e2; color: #ef4444; }
-
-.anno-panel-input {
+.comment-thread-input-wrap {
   padding: 10px 12px; border-top: 1px solid #f0f0f0;
   display: flex; gap: 6px; align-items: flex-end;
 }
-.anno-category-select {
-  width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e5e5e5;
-  cursor: pointer; flex-shrink: 0; transition: border-color 0.15s;
-}
-.anno-category-select:hover { border-color: #ccc; }
-.anno-text-input {
+.comment-thread-input {
   flex: 1; border: 1px solid #e5e5e5; border-radius: 6px; padding: 6px 10px;
   font-family: var(--font); font-size: 13px; color: var(--text); resize: none;
   min-height: 28px; max-height: 80px; line-height: 1.4; outline: none;
 }
-.anno-text-input:focus { border-color: var(--accent); }
-.anno-text-input::placeholder { color: #bbb; }
-.anno-add-btn {
+.comment-thread-input:focus { border-color: var(--accent); }
+.comment-thread-input::placeholder { color: #bbb; }
+.comment-thread-submit {
   width: 28px; height: 28px; border-radius: 6px; border: none;
   background: var(--accent); color: #fff; cursor: pointer; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
   transition: opacity 0.15s;
 }
-.anno-add-btn:hover { opacity: 0.85; }
+.comment-thread-submit:hover { opacity: 0.85; }
+.comment-thread-submit svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+.comment-thread-delete {
+  width: 22px; height: 22px; border: none; border-radius: 4px; background: transparent;
+  color: #ccc; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.1s; opacity: 0;
+}
+.comment-thread-body:hover .comment-thread-delete { opacity: 1; }
+.comment-thread-delete:hover { background: #fee2e2; color: #ef4444; }
 
 /* ── Welcome overlay ───────────────────────────────────────────── */
 #welcome {
@@ -361,9 +418,13 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
       <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     </button>
     <span class="toolbar-divider"></span>
-    <button class="toolbar-btn" id="btn-note" title="Add sticky note (N)">
-      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Note
+    <button class="toolbar-btn" id="btn-comment" title="Add comment (C)">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Comment
+    </button>
+    <span class="toolbar-divider"></span>
+    <button class="toolbar-btn" id="btn-theme" title="Toggle dark mode (D)">
+      <svg viewBox="0 0 24 24" id="theme-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
   </div>
 </div>
@@ -390,7 +451,7 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
     <div class="welcome-keys">
       <span>Drag to <strong>pan</strong></span>
       <span>Scroll to <strong>zoom</strong></span>
-      <span>Double-click for <strong>notes</strong></span>
+      <span><strong>C</strong> to <strong>comment</strong></span>
     </div>
     <p>Click a card header to drag it. Click the preview to interact with it.</p>
     <button class="welcome-dismiss" id="welcome-dismiss">Got it</button>
@@ -412,15 +473,15 @@ const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 const state = {
   viewport: { x: 0, y: 0, zoom: 1 },
   cards: {},      // { filename: { x, y, w, h } }
-  stickies: [],   // [{ id, x, y, text, color }]
+  comments: [],   // [{ id, x, y, text, resolved, timestamp }]
   annotations: {} // { filename: [{ id, text, category, timestamp }] }
 };
 
 let files = [];
 let interactiveCard = null;
-let selectedSticky = null;
-let annoPanel = null; // currently open annotation panel element
-let addingNote = false;
+let selectedComment = null;
+let openThread = null; // currently open comment thread element
+let addingComment = false;
 
 const CARD_W = 420;
 const CARD_H = 280;
@@ -439,7 +500,7 @@ const CATEGORIES = {
 };
 const CATEGORY_KEYS = Object.keys(CATEGORIES);
 
-const STICKY_COLORS = ['yellow', 'blue', 'green', 'pink', 'purple'];
+let commentIdCounter = Date.now();
 
 // ── API ──────────────────────────────────────────────────────────
 async function fetchFiles() {
@@ -504,10 +565,10 @@ function zoomTo(newZoom, screenX, screenY) {
 
 function fitAll() {
   const cardEls = $$('.card', canvas);
-  const stickyEls = $$('.sticky', canvas);
-  if (cardEls.length === 0 && stickyEls.length === 0) return;
+  const commentEls = $$('.comment-pin', canvas);
+  if (cardEls.length === 0 && commentEls.length === 0) return;
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const el of [...cardEls, ...stickyEls]) {
+  for (const el of [...cardEls, ...commentEls]) {
     const x = parseFloat(el.style.left);
     const y = parseFloat(el.style.top);
     const w = el.offsetWidth;
@@ -533,21 +594,57 @@ function fitAll() {
 // ── Pan ──────────────────────────────────────────────────────────
 let isPanning = false;
 let panStart = { x: 0, y: 0 };
+let spaceHeld = false;
+
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && !e.repeat && !e.target.isContentEditable && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
+    e.preventDefault();
+    spaceHeld = true;
+    viewport.style.cursor = 'grab';
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  if (e.code === 'Space') {
+    spaceHeld = false;
+    if (!isPanning) {
+      viewport.style.cursor = addingComment ? 'crosshair' : '';
+    }
+  }
+});
+
+// Capture-phase handler for spacebar pan and comment placement over cards
+document.addEventListener('pointerdown', (e) => {
+  // Spacebar pan — works over any element
+  if (spaceHeld) {
+    isPanning = true;
+    panStart = { x: e.clientX - state.viewport.x, y: e.clientY - state.viewport.y };
+    viewport.style.cursor = 'grabbing';
+    viewport.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    e.stopPropagation();
+    return;
+  }
+  // Comment mode — place comment over anything in the viewport
+  if (addingComment && viewport.contains(e.target)) {
+    const pos = screenToCanvas(e.clientX, e.clientY - 48);
+    const comment = createComment(pos.x, pos.y);
+    setAddingComment(false);
+    openCommentThread(comment.id);
+    e.preventDefault();
+    e.stopPropagation();
+    return;
+  }
+}, true);
 
 viewport.addEventListener('pointerdown', (e) => {
   if (e.target !== viewport && e.target !== canvas) return;
-  if (addingNote) {
-    const pos = screenToCanvas(e.clientX, e.clientY - 48);
-    createSticky(pos.x, pos.y);
-    setAddingNote(false);
-    return;
-  }
   isPanning = true;
   panStart = { x: e.clientX - state.viewport.x, y: e.clientY - state.viewport.y };
   viewport.classList.add('panning');
   viewport.setPointerCapture(e.pointerId);
-  closeAnnotationPanel();
-  deselectSticky();
+  closeCommentThread();
+  deselectComment();
   exitInteractiveCard();
 });
 
@@ -562,6 +659,7 @@ viewport.addEventListener('pointerup', (e) => {
   if (!isPanning) return;
   isPanning = false;
   viewport.classList.remove('panning');
+  viewport.style.cursor = spaceHeld ? 'grab' : (addingComment ? 'crosshair' : '');
   saveState();
 });
 
@@ -576,11 +674,12 @@ viewport.addEventListener('wheel', (e) => {
   zoomTo(state.viewport.zoom * factor, screenX, screenY);
 }, { passive: false });
 
-// ── Double-click for sticky ──────────────────────────────────────
+// ── Double-click to place comment ────────────────────────────────
 viewport.addEventListener('dblclick', (e) => {
   if (e.target !== viewport && e.target !== canvas) return;
   const pos = screenToCanvas(e.clientX, e.clientY - 48);
-  createSticky(pos.x, pos.y);
+  const comment = createComment(pos.x, pos.y);
+  openCommentThread(comment.id);
 });
 
 // ── Card rendering ───────────────────────────────────────────────
@@ -689,6 +788,7 @@ function setupCardDrag(cardEl, handle, filename) {
 
   handle.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
+    if (e.target.closest('.card-action-btn')) return;
     e.stopPropagation();
     dragging = true;
     startX = e.clientX;
@@ -723,91 +823,84 @@ function setupCardDrag(cardEl, handle, filename) {
   });
 }
 
-// ── Sticky Notes ─────────────────────────────────────────────────
-let stickyIdCounter = Date.now();
+// ── Comments ─────────────────────────────────────────────────────
 
-function createSticky(x, y, text = '', color = 'yellow', id = null) {
-  id = id || 'sticky-' + (stickyIdCounter++);
-  const div = document.createElement('div');
-  div.className = 'sticky' + (color !== 'yellow' ? ` sticky-color-${color}` : '');
-  div.dataset.id = id;
-  div.style.left = x + 'px';
-  div.style.top = y + 'px';
-  div.setAttribute('contenteditable', 'true');
-  div.textContent = text || 'New note...';
-
-  div.innerHTML += `
-    <button class="sticky-delete" title="Delete note">&times;</button>
-    <div class="sticky-color-picker">
-      ${STICKY_COLORS.map(c => `<div class="sticky-color-dot" data-color="${c}" style="background:${c === 'yellow' ? '#fef3c7' : c === 'blue' ? '#dbeafe' : c === 'green' ? '#dcfce7' : c === 'pink' ? '#fce7f3' : '#f3e8ff'}"></div>`).join('')}
-    </div>
-  `;
-
-  // Track sticky in state
-  const stickyData = { id, x, y, text: text || 'New note...', color };
-  const existing = state.stickies.findIndex(s => s.id === id);
-  if (existing >= 0) state.stickies[existing] = stickyData;
-  else state.stickies.push(stickyData);
-
-  setupStickyDrag(div, id);
-  setupStickyEditing(div, id);
-
-  // Delete button
-  div.querySelector('.sticky-delete').addEventListener('click', (e) => {
-    e.stopPropagation();
-    div.remove();
-    state.stickies = state.stickies.filter(s => s.id !== id);
-    saveState();
-  });
-
-  // Color picker
-  div.querySelectorAll('.sticky-color-dot').forEach(dot => {
-    dot.addEventListener('mousedown', (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      const c = dot.dataset.color;
-      div.className = 'sticky' + (c !== 'yellow' ? ` sticky-color-${c}` : '');
-      // Re-append the delete and picker (lost when className replaced)
-      const sd = state.stickies.find(s => s.id === id);
-      if (sd) sd.color = c;
-      saveState();
-    });
-  });
-
-  canvas.appendChild(div);
-
-  // Auto-focus if new
-  if (!text) {
-    div.focus();
-    // Select all text for easy replacement
-    const range = document.createRange();
-    range.selectNodeContents(div.childNodes[0]);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
+function findCardAtPosition(canvasX, canvasY) {
+  for (const f of files) {
+    const cd = state.cards[f.name];
+    if (!cd) continue;
+    const x = cd.x, y = cd.y, w = cd.w || CARD_W, h = cd.h || (Math.round(IFRAME_H * (CARD_W / IFRAME_W)) + 36);
+    if (canvasX >= x && canvasX <= x + w && canvasY >= y && canvasY <= y + h) {
+      return f.name;
+    }
   }
-
-  saveState();
-  return div;
+  return null;
 }
 
-function setupStickyDrag(el, id) {
+function getCommentNumber(id) {
+  const unresolvedComments = state.comments.filter(c => !c.resolved);
+  const idx = unresolvedComments.findIndex(c => c.id === id);
+  if (idx >= 0) return idx + 1;
+  // Fallback: include resolved
+  return state.comments.findIndex(c => c.id === id) + 1;
+}
+
+function createComment(x, y, text = '', id = null, timestamp = null, resolved = false, cardFile = null) {
+  id = id || 'comment-' + (commentIdCounter++);
+  const existing = state.comments.find(c => c.id === id);
+  // Auto-detect card if not provided and not restoring from state
+  if (!cardFile && !existing) {
+    cardFile = findCardAtPosition(x, y);
+  }
+
+  const pin = document.createElement('div');
+  pin.className = 'comment-pin' + (resolved ? ' resolved' : '');
+  pin.dataset.id = id;
+  // Offset so the pointed tip (bottom-left) lands at the click position
+  pin.style.left = x + 'px';
+  pin.style.top = (y - 28) + 'px';
+
+  const num = document.createElement('span');
+  num.className = 'comment-pin-number';
+  num.textContent = getCommentNumber(id) || state.comments.length + 1;
+  pin.appendChild(num);
+
+  // Hover preview
+  const preview = document.createElement('span');
+  preview.className = 'comment-pin-preview';
+  preview.textContent = text ? (text.length > 50 ? text.slice(0, 50) + '...' : text) : 'Empty comment';
+  pin.appendChild(preview);
+
+  // Track in state
+  if (!existing) {
+    state.comments.push({ id, x, y, text, resolved, cardFile, timestamp: timestamp || new Date().toISOString() });
+  }
+
+  // Click to open thread
+  pin.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openCommentThread(id);
+  });
+
+  // Drag support
+  setupCommentDrag(pin, id);
+
+  canvas.appendChild(pin);
+  saveState();
+  return { id, pin };
+}
+
+function setupCommentDrag(el, id) {
   let dragging = false;
   let startX, startY, origX, origY;
 
   el.addEventListener('pointerdown', (e) => {
-    if (e.target.classList.contains('sticky-delete') || e.target.classList.contains('sticky-color-dot')) return;
-    if (el.classList.contains('editing')) return;
     e.stopPropagation();
-    deselectSticky();
-    selectedSticky = el;
-    el.classList.add('selected');
     dragging = true;
     startX = e.clientX;
     startY = e.clientY;
     origX = parseFloat(el.style.left);
     origY = parseFloat(el.style.top);
-    el.classList.add('dragging');
     el.setPointerCapture(e.pointerId);
   });
 
@@ -821,54 +914,199 @@ function setupStickyDrag(el, id) {
 
   el.addEventListener('pointerup', (e) => {
     if (!dragging) return;
+    const wasDrag = Math.abs(e.clientX - startX) > 3 || Math.abs(e.clientY - startY) > 3;
     dragging = false;
-    el.classList.remove('dragging');
-    const sd = state.stickies.find(s => s.id === id);
-    if (sd) {
-      sd.x = parseFloat(el.style.left);
-      sd.y = parseFloat(el.style.top);
+    const cd = state.comments.find(c => c.id === id);
+    if (cd) {
+      cd.x = parseFloat(el.style.left);
+      cd.y = parseFloat(el.style.top) + 28; // Reverse the offset
+      cd.cardFile = findCardAtPosition(cd.x, cd.y); // Re-associate on drag
     }
     saveState();
+    // If it was just a click (not a drag), open thread
+    if (!wasDrag) {
+      openCommentThread(id);
+    }
   });
 }
 
-function setupStickyEditing(el, id) {
-  el.addEventListener('dblclick', (e) => {
-    e.stopPropagation();
-    el.classList.add('editing');
-    el.focus();
-  });
+function openCommentThread(commentId) {
+  closeCommentThread();
+  const cd = state.comments.find(c => c.id === commentId);
+  if (!cd) return;
 
-  el.addEventListener('blur', () => {
-    el.classList.remove('editing');
-    // Get just text content without the delete button and picker
-    const textNodes = [...el.childNodes].filter(n => n.nodeType === Node.TEXT_NODE);
-    const text = textNodes.map(n => n.textContent).join('').trim();
-    const sd = state.stickies.find(s => s.id === id);
-    if (sd) sd.text = text;
+  const pinEl = $(`.comment-pin[data-id="${CSS.escape(commentId)}"]`);
+  if (pinEl) pinEl.classList.add('active');
+  selectedComment = pinEl;
+
+  const thread = document.createElement('div');
+  thread.className = 'comment-thread';
+  thread.dataset.commentId = commentId;
+
+  const num = getCommentNumber(commentId);
+
+  const cardLabel = cd.cardFile ? `<span style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;" title="${escHtml(cd.cardFile)}">on ${escHtml(cd.cardFile.replace(/\.html$/,''))}</span>` : '';
+
+  thread.innerHTML = `
+    <div class="comment-thread-header">
+      <div class="comment-thread-header-left">
+        <span class="comment-thread-num">${num}</span>
+        ${cardLabel}
+        <span class="comment-thread-time">${formatTime(cd.timestamp)}</span>
+      </div>
+      <button class="comment-resolve${cd.resolved ? ' resolved' : ''}" title="${cd.resolved ? 'Unresolve' : 'Resolve'}">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+      <button class="comment-thread-close">&times;</button>
+    </div>
+    ${cd.text ? `
+      <div class="comment-thread-body">
+        <div style="display:flex;align-items:flex-start;gap:6px;">
+          <div class="comment-thread-text" style="flex:1;">${escHtml(cd.text)}</div>
+          <button class="comment-thread-delete" title="Delete comment">&times;</button>
+        </div>
+      </div>
+    ` : '<div class="comment-thread-empty">Click below to add your comment</div>'}
+    <div class="comment-thread-input-wrap">
+      <textarea class="comment-thread-input" placeholder="${cd.text ? 'Reply...' : 'Add a comment...'}" rows="1"></textarea>
+      <button class="comment-thread-submit">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  `;
+
+  // Position: fixed, next to pin
+  if (pinEl) {
+    const pinRect = pinEl.getBoundingClientRect();
+    thread.style.left = (pinRect.right + 12) + 'px';
+    thread.style.top = (pinRect.top - 4) + 'px';
+  }
+
+  document.body.appendChild(thread);
+
+  // Keep in viewport
+  const rect = thread.getBoundingClientRect();
+  if (rect.right > window.innerWidth - 8) {
+    const pinRect = pinEl ? pinEl.getBoundingClientRect() : rect;
+    thread.style.left = (pinRect.left - rect.width - 12) + 'px';
+  }
+  if (rect.bottom > window.innerHeight - 8) {
+    thread.style.top = (window.innerHeight - rect.height - 8) + 'px';
+  }
+
+  openThread = thread;
+
+  // Wire close
+  thread.querySelector('.comment-thread-close').addEventListener('click', closeCommentThread);
+
+  // Wire resolve
+  thread.querySelector('.comment-resolve').addEventListener('click', () => {
+    cd.resolved = !cd.resolved;
+    if (pinEl) pinEl.classList.toggle('resolved', cd.resolved);
     saveState();
+    refreshCommentNumbers();
+    // Re-open to refresh UI
+    openCommentThread(commentId);
   });
 
-  el.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') el.blur();
-    e.stopPropagation(); // Don't trigger canvas shortcuts while editing
+  // Wire delete
+  const delBtn = thread.querySelector('.comment-thread-delete');
+  if (delBtn) {
+    delBtn.addEventListener('click', () => {
+      deleteComment(commentId);
+    });
+  }
+
+  // Wire submit
+  const input = thread.querySelector('.comment-thread-input');
+  const submitBtn = thread.querySelector('.comment-thread-submit');
+  function submitComment() {
+    const text = input.value.trim();
+    if (!text) return;
+    if (!cd.text) {
+      // First comment — set the text
+      cd.text = text;
+    } else {
+      // Append as reply
+      cd.text += '\n\n' + text;
+    }
+    cd.timestamp = cd.timestamp || new Date().toISOString();
+    input.value = '';
+    saveState();
+    // Update preview on pin
+    if (pinEl) {
+      const prev = pinEl.querySelector('.comment-pin-preview');
+      if (prev) prev.textContent = cd.text.length > 50 ? cd.text.slice(0, 50) + '...' : cd.text;
+    }
+    // Re-render thread
+    openCommentThread(commentId);
+  }
+  submitBtn.addEventListener('click', submitComment);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitComment(); }
+    e.stopPropagation();
   });
+
+  // Prevent clicks from closing
+  thread.addEventListener('pointerdown', (e) => e.stopPropagation());
+  thread.addEventListener('click', (e) => e.stopPropagation());
+
+  // Focus input
+  setTimeout(() => input.focus(), 50);
 }
 
-function deselectSticky() {
-  if (selectedSticky) {
-    selectedSticky.classList.remove('selected');
-    selectedSticky = null;
+function closeCommentThread() {
+  if (openThread) {
+    const id = openThread.dataset.commentId;
+    // Remove empty comments (placed but never typed into)
+    const cd = state.comments.find(c => c.id === id);
+    if (cd && !cd.text) {
+      deleteComment(id);
+    }
+    openThread.remove();
+    openThread = null;
+  }
+  deselectComment();
+}
+
+function deselectComment() {
+  if (selectedComment) {
+    selectedComment.classList.remove('active');
+    selectedComment = null;
   }
 }
 
-function setAddingNote(val) {
-  addingNote = val;
-  viewport.classList.toggle('adding-note', val);
-  $('#btn-note').classList.toggle('active', val);
+function deleteComment(id) {
+  const pinEl = $(`.comment-pin[data-id="${CSS.escape(id)}"]`);
+  if (pinEl) pinEl.remove();
+  state.comments = state.comments.filter(c => c.id !== id);
+  if (openThread && openThread.dataset.commentId === id) {
+    openThread.remove();
+    openThread = null;
+  }
+  selectedComment = null;
+  saveState();
+  refreshCommentNumbers();
 }
 
-// ── Annotations ──────────────────────────────────────────────────
+function refreshCommentNumbers() {
+  state.comments.forEach(c => {
+    const pinEl = $(`.comment-pin[data-id="${CSS.escape(c.id)}"]`);
+    if (pinEl) {
+      const numEl = pinEl.querySelector('.comment-pin-number');
+      if (numEl) numEl.textContent = getCommentNumber(c.id);
+    }
+  });
+}
+
+function setAddingComment(val) {
+  addingComment = val;
+  viewport.classList.toggle('adding-comment', val);
+  $('#btn-comment').classList.toggle('active', val);
+}
+
+// ── Annotations (per-card) ────────────────────────────────────────
+let annoPanel = null;
 let currentAnnoCategory = 'note';
 
 function toggleAnnotationPanel(filename, anchorBtn, cardEl) {
@@ -879,43 +1117,45 @@ function toggleAnnotationPanel(filename, anchorBtn, cardEl) {
   closeAnnotationPanel();
 
   const panel = document.createElement('div');
-  panel.className = 'anno-panel';
+  panel.className = 'comment-thread';
   panel.dataset.file = filename;
 
   const annos = state.annotations[filename] || [];
 
   panel.innerHTML = `
-    <div class="anno-panel-header">
-      <span>Annotations</span>
-      <button class="anno-panel-close">&times;</button>
+    <div class="comment-thread-header">
+      <div class="comment-thread-header-left">
+        <span style="font-size:12px;font-weight:700;">Annotations</span>
+      </div>
+      <button class="comment-thread-close">&times;</button>
     </div>
-    <div class="anno-panel-body">
+    <div class="comment-thread-body" style="padding:0;">
       ${annos.length === 0 ? '<div style="padding:16px;text-align:center;color:#bbb;font-size:13px;">No annotations yet</div>' :
         annos.map(a => `
-          <div class="anno-entry" data-id="${a.id}">
-            <div class="anno-dot" style="background:${CATEGORIES[a.category]?.color || '#8b5cf6'}"></div>
-            <div>
-              <div class="anno-entry-text">${escHtml(a.text)}</div>
-              <div class="anno-entry-time">${formatTime(a.timestamp)}</div>
+          <div style="padding:8px 12px;border-bottom:1px solid var(--card-header-border);display:flex;gap:8px;align-items:flex-start;">
+            <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;background:${CATEGORIES[a.category]?.color || '#8b5cf6'}"></div>
+            <div style="flex:1;">
+              <div class="comment-thread-text" style="font-size:13px;">${escHtml(a.text)}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${formatTime(a.timestamp)}</div>
             </div>
-            <button class="anno-entry-delete" data-id="${a.id}">&times;</button>
+            <button class="comment-thread-delete" style="opacity:1;" data-id="${a.id}">&times;</button>
           </div>
         `).join('')}
     </div>
-    <div class="anno-panel-input">
-      <div class="anno-category-select" style="background:${CATEGORIES[currentAnnoCategory].color}" title="${CATEGORIES[currentAnnoCategory].label}"></div>
-      <textarea class="anno-text-input" placeholder="Add a note..." rows="1"></textarea>
-      <button class="anno-add-btn">+</button>
+    <div class="comment-thread-input-wrap">
+      <div style="width:24px;height:24px;border-radius:50%;background:${CATEGORIES[currentAnnoCategory].color};cursor:pointer;flex-shrink:0;" class="anno-cat-btn" title="${CATEGORIES[currentAnnoCategory].label}"></div>
+      <textarea class="comment-thread-input" placeholder="Add a note..." rows="1"></textarea>
+      <button class="comment-thread-submit">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
     </div>
   `;
 
-  // Position panel relative to card
   const cardRect = cardEl.getBoundingClientRect();
   panel.style.position = 'fixed';
   panel.style.left = (cardRect.right + 8) + 'px';
   panel.style.top = cardRect.top + 'px';
 
-  // Keep in viewport
   document.body.appendChild(panel);
   const panelRect = panel.getBoundingClientRect();
   if (panelRect.right > window.innerWidth - 8) {
@@ -927,23 +1167,19 @@ function toggleAnnotationPanel(filename, anchorBtn, cardEl) {
 
   annoPanel = panel;
 
-  // Wire close
-  panel.querySelector('.anno-panel-close').addEventListener('click', closeAnnotationPanel);
+  panel.querySelector('.comment-thread-close').addEventListener('click', closeAnnotationPanel);
 
-  // Wire delete buttons
-  panel.querySelectorAll('.anno-entry-delete').forEach(btn => {
+  panel.querySelectorAll('.comment-thread-delete').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id;
       state.annotations[filename] = (state.annotations[filename] || []).filter(a => a.id !== id);
       saveState();
       updateAnnoButton(filename);
-      // Re-render
       toggleAnnotationPanel(filename, anchorBtn, cardEl);
     });
   });
 
-  // Wire category cycle
-  const catBtn = panel.querySelector('.anno-category-select');
+  const catBtn = panel.querySelector('.anno-cat-btn');
   catBtn.addEventListener('click', () => {
     const idx = CATEGORY_KEYS.indexOf(currentAnnoCategory);
     currentAnnoCategory = CATEGORY_KEYS[(idx + 1) % CATEGORY_KEYS.length];
@@ -951,23 +1187,20 @@ function toggleAnnotationPanel(filename, anchorBtn, cardEl) {
     catBtn.title = CATEGORIES[currentAnnoCategory].label;
   });
 
-  // Wire add
-  const input = panel.querySelector('.anno-text-input');
-  const addBtn = panel.querySelector('.anno-add-btn');
+  const input = panel.querySelector('.comment-thread-input');
+  const addBtn = panel.querySelector('.comment-thread-submit');
   function addAnnotation() {
     const text = input.value.trim();
     if (!text) return;
     if (!state.annotations[filename]) state.annotations[filename] = [];
     state.annotations[filename].push({
-      id: 'a-' + Date.now(),
-      text,
+      id: 'a-' + Date.now(), text,
       category: currentAnnoCategory,
       timestamp: new Date().toISOString(),
     });
     input.value = '';
     saveState();
     updateAnnoButton(filename);
-    // Re-render panel
     toggleAnnotationPanel(filename, anchorBtn, cardEl);
   }
   addBtn.addEventListener('click', addAnnotation);
@@ -976,11 +1209,8 @@ function toggleAnnotationPanel(filename, anchorBtn, cardEl) {
     e.stopPropagation();
   });
 
-  // Prevent clicks from closing
   panel.addEventListener('pointerdown', (e) => e.stopPropagation());
   panel.addEventListener('click', (e) => e.stopPropagation());
-
-  // Focus input
   setTimeout(() => input.focus(), 50);
 }
 
@@ -1214,25 +1444,23 @@ document.addEventListener('keydown', (e) => {
     case 'L':
       autoLayout();
       break;
-    case 'n':
-    case 'N':
-      setAddingNote(!addingNote);
+    case 'c':
+      setAddingComment(!addingComment);
+      break;
+    case 'd':
+    case 'D':
+      toggleTheme();
       break;
     case 'Escape':
       exitInteractiveCard();
-      closeAnnotationPanel();
-      deselectSticky();
-      setAddingNote(false);
+      closeCommentThread();
+      setAddingComment(false);
       ctxMenu.classList.remove('show');
       break;
     case 'Delete':
     case 'Backspace':
-      if (selectedSticky) {
-        const id = selectedSticky.dataset.id;
-        selectedSticky.remove();
-        state.stickies = state.stickies.filter(s => s.id !== id);
-        selectedSticky = null;
-        saveState();
+      if (selectedComment && !openThread) {
+        deleteComment(selectedComment.dataset.id);
       }
       break;
     case '+':
@@ -1251,7 +1479,8 @@ $('#btn-layout').addEventListener('click', autoLayout);
 $('#btn-fit').addEventListener('click', fitAll);
 $('#btn-zoom-in').addEventListener('click', () => zoomTo(state.viewport.zoom * 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2));
 $('#btn-zoom-out').addEventListener('click', () => zoomTo(state.viewport.zoom / 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2));
-$('#btn-note').addEventListener('click', () => setAddingNote(!addingNote));
+$('#btn-comment').addEventListener('click', () => setAddingComment(!addingComment));
+$('#btn-theme').addEventListener('click', toggleTheme);
 
 // ── Welcome ──────────────────────────────────────────────────────
 function showWelcome() {
@@ -1276,6 +1505,33 @@ function formatTime(iso) {
   } catch { return ''; }
 }
 
+// ── Theme ────────────────────────────────────────────────────────
+function getPreferredTheme() {
+  const saved = localStorage.getItem('canvas-theme');
+  if (saved) return saved;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const icon = $('#theme-icon');
+  if (theme === 'dark') {
+    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  } else {
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  }
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('canvas-theme', next);
+  applyTheme(next);
+}
+
+// Apply theme immediately (before init) to avoid flash
+applyTheme(getPreferredTheme());
+
 // ── Init ─────────────────────────────────────────────────────────
 async function init() {
   // Load saved state
@@ -1283,7 +1539,14 @@ async function init() {
   if (saved) {
     if (saved.viewport) Object.assign(state.viewport, saved.viewport);
     if (saved.cards) Object.assign(state.cards, saved.cards);
-    if (saved.stickies) state.stickies = saved.stickies;
+    if (saved.comments) state.comments = saved.comments;
+    // Migrate old stickies to comments
+    if (saved.stickies && saved.stickies.length && (!saved.comments || !saved.comments.length)) {
+      state.comments = saved.stickies.map(s => ({
+        id: s.id, x: s.x, y: s.y, text: s.text || '',
+        resolved: false, timestamp: new Date().toISOString()
+      }));
+    }
     if (saved.annotations) Object.assign(state.annotations, saved.annotations);
   }
 
@@ -1292,9 +1555,9 @@ async function init() {
   // Load files and render cards
   await loadFiles();
 
-  // Restore stickies
-  for (const s of state.stickies) {
-    createSticky(s.x, s.y, s.text, s.color || 'yellow', s.id);
+  // Restore comments
+  for (const c of state.comments) {
+    createComment(c.x, c.y, c.text, c.id, c.timestamp, c.resolved, c.cardFile);
   }
 
   // Connect SSE for live updates
