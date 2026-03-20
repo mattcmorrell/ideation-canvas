@@ -3,7 +3,9 @@
 /**
  * Mockup Canvas — Lightweight infinite canvas for HTML mockup review
  *
- * Usage: node canvas.js [directory] [port]
+ * Usage:
+ *   ideation-canvas [directory] [port]   Start the canvas server
+ *   ideation-canvas setup                Install the /canvas skill for Claude Code
  *
  * Zero dependencies. Requires Node 18+.
  */
@@ -12,6 +14,33 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
+
+// ── Setup command ───────────────────────────────────────────────────
+if (process.argv[2] === 'setup') {
+  const skillDir = path.join(process.env.HOME, '.claude', 'skills', 'canvas');
+  const skillSrc = path.join(__dirname, 'skill', 'SKILL.md');
+
+  if (!fs.existsSync(skillSrc)) {
+    console.error('Error: skill/SKILL.md not found. Run from the ideation-canvas directory.');
+    process.exit(1);
+  }
+
+  fs.mkdirSync(skillDir, { recursive: true });
+  fs.copyFileSync(skillSrc, path.join(skillDir, 'SKILL.md'));
+
+  console.log('');
+  console.log('  Ideation Canvas — Setup complete');
+  console.log('  ─────────────────────────────────');
+  console.log(`  ✓ Installed /canvas skill to ${skillDir}`);
+  console.log('');
+  console.log('  Open Claude Code in any project and type:');
+  console.log('');
+  console.log('    /canvas');
+  console.log('');
+  console.log('  Then ask Claude to make mockups. They\'ll appear on the canvas.');
+  console.log('');
+  process.exit(0);
+}
 
 // ── Config ──────────────────────────────────────────────────────────
 const MOCKUP_DIR = path.resolve(process.argv[2] || '.');

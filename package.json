@@ -1,0 +1,18 @@
+{
+  "name": "ideation-canvas",
+  "version": "0.1.0",
+  "description": "Infinite canvas for reviewing HTML mockups with Claude",
+  "main": "canvas.js",
+  "bin": {
+    "ideation-canvas": "./canvas.js"
+  },
+  "keywords": ["canvas", "mockup", "design", "review", "claude"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mattcmorrell/ideation-canvas.git"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
