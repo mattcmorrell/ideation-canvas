@@ -24,8 +24,8 @@
   --text-muted: #999;
   --accent: #3b82f6;
   --accent-light: rgba(59,130,246,0.1);
-  --group-bg: rgba(59,130,246,0.04);
-  --group-border: rgba(59,130,246,0.15);
+  --group-bg: rgba(59,130,246,0.15);
+  --group-border: rgba(59,130,246,0.8);
   --anno-note: #8b5cf6;
   --anno-love: #10b981;
   --anno-fix: #ef4444;
@@ -53,8 +53,8 @@
   --text-muted: #999;
   --accent: #60a5fa;
   --accent-light: rgba(96,165,250,0.15);
-  --group-bg: rgba(96,165,250,0.06);
-  --group-border: rgba(96,165,250,0.2);
+  --group-bg: rgba(96,165,250,0.15);
+  --group-border: rgba(96,165,250,0.8);
   --anno-note: #a78bfa;
   --anno-love: #34d399;
   --anno-fix: #f87171;
@@ -161,7 +161,7 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
 }
 
 .card-header {
-  height: 36px; padding: 0 10px; background: var(--card-header-bg);
+  height: 100px; padding: 0 24px; background: var(--card-header-bg);
   border-bottom: 1px solid var(--card-header-border);
   display: flex; align-items: center; justify-content: space-between;
   cursor: default; user-select: none;
@@ -169,40 +169,40 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
 #viewport.adding-comment .card-header { cursor: inherit; }
 .card-header.dragging { cursor: grabbing; }
 .card-title {
-  font-size: 12px; font-weight: 600; color: var(--text); overflow: hidden;
+  font-size: 24px; font-weight: 700; color: var(--text); overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;
 }
-.card-badges { display: flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: 8px; }
+.card-badges { display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 16px; }
 .card-badge {
-  font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;
+  font-size: 16px; font-weight: 700; padding: 6px 16px; border-radius: 8px;
   background: var(--accent-light); color: var(--accent); white-space: nowrap;
 }
-.card-badge.version { background: rgba(139,92,246,0.1); color: #8b5cf6; }
-.card-badge.tabs { background: rgba(16,185,129,0.1); color: #10b981; }
+.card-badge.version { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+.card-badge.tabs { background: rgba(16,185,129,0.15); color: #10b981; }
 
 .card-actions {
-  display: flex; align-items: center; gap: 2px; flex-shrink: 0; margin-left: 4px;
+  display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: 12px;
   opacity: 0; transition: opacity 0.15s;
 }
 .card:hover .card-actions { opacity: 1; }
 .card-action-btn {
-  width: 24px; height: 24px; border: none; border-radius: 4px; background: transparent;
+  width: 40px; height: 40px; border: none; border-radius: 8px; background: transparent;
   color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: all 0.1s;
 }
 .card-action-btn:hover { background: rgba(0,0,0,0.06); color: var(--text); }
-.card-action-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+.card-action-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
 .card-action-btn.has-annotations { color: var(--anno-note); }
 
 .card-iframe-wrap {
   position: relative; overflow: hidden;
-  width: var(--card-w, 420px);
-  height: var(--card-h, 280px);
+  width: var(--card-w, 1440px);
+  height: var(--card-h, 900px);
 }
 .card-iframe-wrap iframe {
   width: var(--iframe-w, 1440px);
   height: var(--iframe-h, 900px);
-  transform: scale(var(--iframe-scale, 0.292));
+  transform: scale(var(--iframe-scale, 1));
   transform-origin: 0 0; border: none;
   pointer-events: none; background: #fff;
 }
@@ -225,15 +225,15 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
 
 /* ── Version Groups ────────────────────────────────────────────── */
 .version-group {
-  position: absolute; border: 1.5px dashed var(--group-border);
-  border-radius: 16px; background: var(--group-bg);
+  position: absolute; border: 2px dashed var(--group-border);
+  border-radius: 24px; background: var(--group-bg);
   pointer-events: none; transition: all 0.3s;
 }
 .version-group-label {
-  position: absolute; top: -10px; left: 16px;
-  font-size: 11px; font-weight: 700; color: var(--accent);
-  background: var(--bg); padding: 0 8px; letter-spacing: 0.02em;
-  text-transform: uppercase;
+  position: absolute; top: -22px; left: 24px;
+  font-size: 32px; font-weight: 800; color: var(--accent);
+  background: var(--bg); padding: 4px 18px; letter-spacing: 0.04em;
+  text-transform: uppercase; border-radius: 8px;
 }
 
 /* ── Comment Pins ─────────────────────────────────────────────── */
@@ -534,7 +534,8 @@ html, body { height: 100%; overflow: hidden; font-family: var(--font); color: va
 <div id="hint-bar">
   <span><kbd>C</kbd> Comment</span>
   <span><kbd>Space</kbd> Hold to pan</span>
-  <span><kbd>Scroll</kbd> Zoom</span>
+  <span><kbd>Scroll</kbd> Pan</span>
+  <span><kbd>⌘</kbd><kbd>Scroll</kbd> Zoom</span>
 </div>
 
 <!-- ── Comment Sidebar ─────────────────────────────────────── -->
@@ -595,13 +596,13 @@ let selectedComment = null;
 let openThread = null; // currently open comment thread element
 let addingComment = false;
 
-const CARD_W = 420;
-const CARD_H = 280;
 const IFRAME_W = 1440;
 const IFRAME_H = 900;
-const CARD_GAP = 40;
-const GROUP_GAP = 80;
-const GROUP_PAD = 24;
+const CARD_W = IFRAME_W;
+const CARD_H = IFRAME_H;
+const CARD_GAP = 400;
+const GROUP_GAP = 400;
+const GROUP_PAD = 40;
 
 const CATEGORIES = {
   note:     { label: 'Note',     color: '#8b5cf6' },
@@ -777,15 +778,24 @@ viewport.addEventListener('pointerup', (e) => {
   saveState();
 });
 
-// ── Zoom (wheel) ─────────────────────────────────────────────────
+// ── Scroll to pan, Cmd+Scroll to zoom ────────────────────────────
 viewport.addEventListener('wheel', (e) => {
   e.preventDefault();
-  const rect = viewport.getBoundingClientRect();
-  const screenX = e.clientX - rect.left;
-  const screenY = e.clientY - rect.top;
-  const delta = -e.deltaY * 0.001;
-  const factor = 1 + delta * (e.ctrlKey ? 3 : 1.5);
-  zoomTo(state.viewport.zoom * factor, screenX, screenY);
+  if (e.metaKey || e.ctrlKey) {
+    // Cmd/Ctrl + scroll = zoom (pinch-to-zoom also sends ctrlKey)
+    const rect = viewport.getBoundingClientRect();
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+    const delta = -e.deltaY * 0.003;
+    const factor = 1 + delta;
+    zoomTo(state.viewport.zoom * factor, screenX, screenY);
+  } else {
+    // Normal scroll = pan
+    state.viewport.x -= e.deltaX;
+    state.viewport.y -= e.deltaY;
+    updateTransform();
+    saveState();
+  }
 }, { passive: false });
 
 // ── Double-click to place comment ────────────────────────────────
@@ -1795,11 +1805,17 @@ document.addEventListener('keydown', (e) => {
       break;
     case '+':
     case '=':
-      zoomTo(state.viewport.zoom * 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2);
+      if (e.metaKey || e.ctrlKey) {
+        e.preventDefault();
+        zoomTo(state.viewport.zoom * 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2);
+      }
       break;
     case '-':
     case '_':
-      zoomTo(state.viewport.zoom / 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2);
+      if (e.metaKey || e.ctrlKey) {
+        e.preventDefault();
+        zoomTo(state.viewport.zoom / 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2);
+      }
       break;
   }
 });
