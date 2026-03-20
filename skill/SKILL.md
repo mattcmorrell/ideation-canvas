@@ -53,14 +53,28 @@ find . -name "*.html" -not -path "*/node_modules/*" -not -path "*/dist/*" -not -
 
 Once discovered, store the chosen directory path. Use it for all future mockup operations in this session. If a `.canvas-state.json` already exists in the chosen directory, the canvas will restore previous positions and comments.
 
-### 3. Start the canvas server (if not already running)
+### 3. Start the canvas server (or restart if pointing at wrong directory)
 
-Check if port 3333 is in use:
+First check if a server is already running and whether it's watching the right directory:
 ```bash
+# Check if port 3333 is in use
 lsof -ti:3333
+
+# If running, check what directory it's serving
+curl -s http://localhost:3333/api/info 2>/dev/null
 ```
 
-If not running, start it in the background. Try in order:
+The `/api/info` endpoint returns `{"dir":"/absolute/path/to/mockups","port":3333}`.
+
+**If the server is running AND serving the correct directory** → skip to step 4.
+
+**If the server is running BUT serving a different directory** → kill it and restart:
+```bash
+lsof -ti:3333 | xargs kill
+sleep 1
+```
+
+**If no server is running, or after killing the old one**, start it in the background. Try in order:
 ```bash
 # Option 1: npx (works if published to npm)
 npx ideation-canvas ./{mockup-dir} &

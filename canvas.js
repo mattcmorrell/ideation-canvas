@@ -207,6 +207,10 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
 
   // ── API routes ──
+  if (pathname === '/api/info') {
+    return sendJson(res, { dir: MOCKUP_DIR, port: PORT });
+  }
+
   if (pathname === '/api/files') {
     return sendJson(res, listHtmlFiles());
   }
