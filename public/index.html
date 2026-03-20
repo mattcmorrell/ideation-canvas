@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup Canvas</title>
+<style>
+/* ── Variables ─────────────────────────────────────────────────── */
+:root {
+  --bg: #f0efe9;
+  --dot: #d4d3cd;
+  --toolbar-bg: #ffffff;
+  --toolbar-border: #e5e4de;
+  --card-bg: #ffffff;
+  --card-border: #e0dfda;
+  --card-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+  --card-shadow-hover: 0 4px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
+  --card-shadow-drag: 0 12px 40px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.10);
+  --card-radius: 10px;
+  --card-header-bg: #fafaf7;
+  --card-header-border: #eeeee8;
+  --text: #1a1a1a;
+  --text-dim: #777;
+  --text-muted: #999;
+  --accent: #3b82f6;
+  --accent-light: rgba(59,130,246,0.1);
+  --group-bg: rgba(59,130,246,0.04);
+  --group-border: rgba(59,130,246,0.15);
+  --sticky-bg: #fef3c7;
+  --sticky-border: #f5e6a3;
+  --sticky-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  --anno-note: #8b5cf6;
+  --anno-love: #10b981;
+  --anno-fix: #ef4444;
+  --anno-idea: #f59e0b;
+  --anno-question: #3b82f6;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
+}
+
+/* ── Reset ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; font-family: var(--font); color: var(--text); background: var(--bg); }
+
+/* ── Toolbar ───────────────────────────────────────────────────── */
+#toolbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 48px; background: var(--toolbar-bg); border-bottom: 1px solid var(--toolbar-border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; gap: 12px; user-select: none;
+}
+#toolbar .left { display: flex; align-items: center; gap: 10px; }
+#toolbar .right { display: flex; align-items: center; gap: 6px; }
+.toolbar-title { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+.toolbar-divider { width: 1px; height: 20px; background: var(--toolbar-border); }
+.toolbar-info { font-size: 13px; color: var(--text-dim); }
+.toolbar-btn {
+  height: 32px; padding: 0 12px; border: 1px solid var(--toolbar-border); border-radius: 6px;
+  background: var(--toolbar-bg); color: var(--text-dim); font-family: var(--font); font-size: 12px;
+  font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 5px;
+  transition: all 0.15s;
+}
+.toolbar-btn:hover { background: #f5f5f0; color: var(--text); border-color: #ccc; }
+.toolbar-btn.active { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+.zoom-display {
+  font-size: 12px; font-weight: 600; color: var(--text-dim); min-width: 44px;
+  text-align: center; font-variant-numeric: tabular-nums;
+}
+.toolbar-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ── Viewport & Canvas ─────────────────────────────────────────── */
+#viewport {
+  position: fixed; top: 48px; left: 0; right: 0; bottom: 0;
+  overflow: hidden; cursor: grab;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+#viewport.panning { cursor: grabbing; }
+#viewport.adding-note { cursor: crosshair; }
+
+#canvas {
+  position: absolute; top: 0; left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* ── Cards ─────────────────────────────────────────────────────── */
+.card {
+  position: absolute;
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: var(--card-radius); box-shadow: var(--card-shadow);
+  transition: box-shadow 0.2s, border-color 0.2s;
+  overflow: hidden;
+}
+.card:hover { box-shadow: var(--card-shadow-hover); }
+.card.dragging { box-shadow: var(--card-shadow-drag); z-index: 50; transition: none; }
+.card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light), var(--card-shadow-hover); }
+.card.interactive { border-color: var(--accent); }
+.card.flash-update { animation: flashBorder 1s ease; }
+
+@keyframes flashBorder {
+  0%, 100% { border-color: var(--card-border); }
+  30% { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.2), var(--card-shadow); }
+}
+
+.card-header {
+  height: 36px; padding: 0 10px; background: var(--card-header-bg);
+  border-bottom: 1px solid var(--card-header-border);
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: grab; user-select: none;
+}
+.card-header.dragging { cursor: grabbing; }
+.card-title {
+  font-size: 12px; font-weight: 600; color: var(--text); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;
+}
+.card-badges { display: flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: 8px; }
+.card-badge {
+  font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;
+  background: var(--accent-light); color: var(--accent); white-space: nowrap;
+}
+.card-badge.version { background: rgba(139,92,246,0.1); color: #8b5cf6; }
+.card-badge.tabs { background: rgba(16,185,129,0.1); color: #10b981; }
+
+.card-actions {
+  display: flex; align-items: center; gap: 2px; flex-shrink: 0; margin-left: 4px;
+  opacity: 0; transition: opacity 0.15s;
+}
+.card:hover .card-actions { opacity: 1; }
+.card-action-btn {
+  width: 24px; height: 24px; border: none; border-radius: 4px; background: transparent;
+  color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.1s;
+}
+.card-action-btn:hover { background: rgba(0,0,0,0.06); color: var(--text); }
+.card-action-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+.card-action-btn.has-annotations { color: var(--anno-note); }
+
+.card-iframe-wrap {
+  position: relative; overflow: hidden;
+  width: var(--card-w, 420px);
+  height: var(--card-h, 280px);
+}
+.card-iframe-wrap iframe {
+  width: var(--iframe-w, 1440px);
+  height: var(--iframe-h, 900px);
+  transform: scale(var(--iframe-scale, 0.292));
+  transform-origin: 0 0; border: none;
+  pointer-events: none; background: #fff;
+}
+.card.interactive .card-iframe-wrap iframe { pointer-events: auto; }
+
+.card-iframe-overlay {
+  position: absolute; inset: 0; z-index: 1; cursor: pointer;
+}
+.card.interactive .card-iframe-overlay { display: none; }
+
+.card-footer {
+  padding: 6px 10px; border-top: 1px solid var(--card-header-border);
+  background: var(--card-header-bg);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; color: var(--text-muted);
+}
+
+/* ── Version Groups ────────────────────────────────────────────── */
+.version-group {
+  position: absolute; border: 1.5px dashed var(--group-border);
+  border-radius: 16px; background: var(--group-bg);
+  pointer-events: none; transition: all 0.3s;
+}
+.version-group-label {
+  position: absolute; top: -10px; left: 16px;
+  font-size: 11px; font-weight: 700; color: var(--accent);
+  background: var(--bg); padding: 0 8px; letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* ── Sticky Notes ──────────────────────────────────────────────── */
+.sticky {
+  position: absolute; min-width: 160px; max-width: 260px;
+  background: var(--sticky-bg); border: 1px solid var(--sticky-border);
+  border-radius: 4px; box-shadow: var(--sticky-shadow);
+  padding: 10px 12px; cursor: grab; user-select: none;
+  font-size: 13px; line-height: 1.5; color: #92400e;
+  transition: box-shadow 0.2s;
+}
+.sticky:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.14); }
+.sticky.dragging { box-shadow: 0 8px 24px rgba(0,0,0,0.18); cursor: grabbing; z-index: 50; }
+.sticky.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sticky.editing { cursor: text; user-select: text; }
+
+.sticky-color-blue { --sticky-bg: #dbeafe; --sticky-border: #a8c8f5; color: #1e40af; }
+.sticky-color-green { --sticky-bg: #dcfce7; --sticky-border: #a3e4b8; color: #166534; }
+.sticky-color-pink { --sticky-bg: #fce7f3; --sticky-border: #f0b4d4; color: #9d174d; }
+.sticky-color-purple { --sticky-bg: #f3e8ff; --sticky-border: #d4b4f5; color: #6b21a8; }
+
+.sticky-delete {
+  position: absolute; top: -8px; right: -8px; width: 20px; height: 20px;
+  border-radius: 50%; background: #ef4444; color: #fff; border: 2px solid var(--bg);
+  font-size: 11px; cursor: pointer; display: none; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.sticky:hover .sticky-delete { display: flex; }
+
+.sticky-color-picker {
+  position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+  display: none; gap: 3px; background: #fff; padding: 3px 6px;
+  border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 1px solid #e5e5e5;
+}
+.sticky:hover .sticky-color-picker { display: flex; }
+.sticky-color-dot {
+  width: 12px; height: 12px; border-radius: 50%; cursor: pointer; border: 1.5px solid rgba(0,0,0,0.1);
+  transition: transform 0.1s;
+}
+.sticky-color-dot:hover { transform: scale(1.3); }
+
+/* ── Annotation Panel ──────────────────────────────────────────── */
+.anno-panel {
+  position: absolute; width: 280px; background: #fff; border: 1px solid #e5e5e5;
+  border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); z-index: 60;
+  font-size: 13px; overflow: hidden;
+}
+.anno-panel-header {
+  padding: 10px 12px; border-bottom: 1px solid #f0f0f0;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; font-weight: 700; color: var(--text);
+}
+.anno-panel-close {
+  width: 22px; height: 22px; border: none; border-radius: 4px; background: transparent;
+  color: #999; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;
+}
+.anno-panel-close:hover { background: #f5f5f5; color: var(--text); }
+.anno-panel-body { max-height: 260px; overflow-y: auto; }
+
+.anno-entry {
+  padding: 8px 12px; border-bottom: 1px solid #f8f8f8;
+  display: flex; gap: 8px; align-items: flex-start;
+}
+.anno-entry:last-child { border-bottom: none; }
+.anno-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+}
+.anno-entry-text { flex: 1; color: var(--text); line-height: 1.5; font-size: 13px; }
+.anno-entry-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.anno-entry-delete {
+  width: 18px; height: 18px; border: none; background: transparent; color: #ccc;
+  cursor: pointer; font-size: 13px; border-radius: 3px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.anno-entry-delete:hover { background: #fee2e2; color: #ef4444; }
+
+.anno-panel-input {
+  padding: 10px 12px; border-top: 1px solid #f0f0f0;
+  display: flex; gap: 6px; align-items: flex-end;
+}
+.anno-category-select {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e5e5e5;
+  cursor: pointer; flex-shrink: 0; transition: border-color 0.15s;
+}
+.anno-category-select:hover { border-color: #ccc; }
+.anno-text-input {
+  flex: 1; border: 1px solid #e5e5e5; border-radius: 6px; padding: 6px 10px;
+  font-family: var(--font); font-size: 13px; color: var(--text); resize: none;
+  min-height: 28px; max-height: 80px; line-height: 1.4; outline: none;
+}
+.anno-text-input:focus { border-color: var(--accent); }
+.anno-text-input::placeholder { color: #bbb; }
+.anno-add-btn {
+  width: 28px; height: 28px; border-radius: 6px; border: none;
+  background: var(--accent); color: #fff; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+  transition: opacity 0.15s;
+}
+.anno-add-btn:hover { opacity: 0.85; }
+
+/* ── Welcome overlay ───────────────────────────────────────────── */
+#welcome {
+  position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); opacity: 1; transition: opacity 0.3s;
+}
+#welcome.hidden { opacity: 0; pointer-events: none; }
+.welcome-card {
+  background: #fff; border-radius: 16px; padding: 32px 40px; max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15); text-align: center;
+}
+.welcome-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.welcome-card p { font-size: 14px; color: var(--text-dim); line-height: 1.6; margin-bottom: 6px; }
+.welcome-keys { display: inline-flex; gap: 16px; margin: 16px 0; font-size: 13px; color: var(--text-dim); }
+.welcome-keys span { display: flex; align-items: center; gap: 4px; }
+.welcome-key {
+  display: inline-block; padding: 2px 7px; border: 1px solid #ddd; border-radius: 4px;
+  font-family: var(--font-mono); font-size: 11px; background: #f9f9f6; color: var(--text);
+}
+.welcome-dismiss {
+  margin-top: 16px; padding: 10px 28px; border: none; border-radius: 8px;
+  background: var(--accent); color: #fff; font-family: var(--font); font-size: 14px;
+  font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+}
+.welcome-dismiss:hover { opacity: 0.9; }
+
+/* ── Empty State ───────────────────────────────────────────────── */
+#empty-state {
+  position: fixed; top: 48px; left: 0; right: 0; bottom: 0; z-index: 90;
+  display: none; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+#empty-state.show { display: flex; }
+.empty-card {
+  text-align: center; padding: 40px; color: var(--text-dim);
+}
+.empty-card h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.empty-card p { font-size: 14px; line-height: 1.6; }
+.empty-card code {
+  display: inline-block; margin-top: 12px; padding: 8px 16px; border-radius: 6px;
+  background: rgba(0,0,0,0.06); font-family: var(--font-mono); font-size: 13px; color: var(--text);
+}
+
+/* ── Context menu ──────────────────────────────────────────────── */
+#context-menu {
+  position: fixed; z-index: 300; min-width: 160px; background: #fff;
+  border: 1px solid #e5e5e5; border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  padding: 4px; display: none; font-size: 13px;
+}
+#context-menu.show { display: block; }
+.ctx-item {
+  padding: 7px 12px; border-radius: 5px; cursor: pointer; display: flex;
+  align-items: center; gap: 8px; color: var(--text); transition: background 0.1s;
+}
+.ctx-item:hover { background: #f5f5f0; }
+.ctx-item.danger { color: #ef4444; }
+.ctx-item.danger:hover { background: #fef2f2; }
+.ctx-sep { height: 1px; background: #f0f0f0; margin: 4px 0; }
+.ctx-shortcut { margin-left: auto; font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+</style>
+</head>
+<body>
+
+<!-- ── Toolbar ───────────────────────────────────────────────── -->
+<div id="toolbar">
+  <div class="left">
+    <span class="toolbar-title">Mockup Canvas</span>
+    <span class="toolbar-divider"></span>
+    <span class="toolbar-info" id="file-count"></span>
+  </div>
+  <div class="right">
+    <button class="toolbar-btn" id="btn-layout" title="Auto-layout cards (L)">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Layout
+    </button>
+    <button class="toolbar-btn" id="btn-fit" title="Fit all in view (1)">
+      <svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      Fit All
+    </button>
+    <span class="toolbar-divider"></span>
+    <button class="toolbar-btn" id="btn-zoom-out" title="Zoom out">
+      <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <span class="zoom-display" id="zoom-display">100%</span>
+    <button class="toolbar-btn" id="btn-zoom-in" title="Zoom in">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <span class="toolbar-divider"></span>
+    <button class="toolbar-btn" id="btn-note" title="Add sticky note (N)">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Note
+    </button>
+  </div>
+</div>
+
+<!-- ── Viewport ──────────────────────────────────────────────── -->
+<div id="viewport">
+  <div id="canvas"></div>
+</div>
+
+<!-- ── Empty state ───────────────────────────────────────────── -->
+<div id="empty-state">
+  <div class="empty-card">
+    <h3>No HTML files found</h3>
+    <p>Add .html files to the watched directory and they'll appear here.</p>
+    <code>node canvas.js ./path/to/mockups</code>
+  </div>
+</div>
+
+<!-- ── Welcome overlay ───────────────────────────────────────── -->
+<div id="welcome" class="hidden">
+  <div class="welcome-card">
+    <h2>Mockup Canvas</h2>
+    <p>Your HTML layouts, arranged on an infinite canvas.</p>
+    <div class="welcome-keys">
+      <span>Drag to <strong>pan</strong></span>
+      <span>Scroll to <strong>zoom</strong></span>
+      <span>Double-click for <strong>notes</strong></span>
+    </div>
+    <p>Click a card header to drag it. Click the preview to interact with it.</p>
+    <button class="welcome-dismiss" id="welcome-dismiss">Got it</button>
+  </div>
+</div>
+
+<!-- ── Context menu ──────────────────────────────────────────── -->
+<div id="context-menu"></div>
+
+<script>
+// ================================================================
+//  MOCKUP CANVAS — Client
+// ================================================================
+
+const $ = (sel, ctx = document) => ctx.querySelector(sel);
+const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+
+// ── State ────────────────────────────────────────────────────────
+const state = {
+  viewport: { x: 0, y: 0, zoom: 1 },
+  cards: {},      // { filename: { x, y, w, h } }
+  stickies: [],   // [{ id, x, y, text, color }]
+  annotations: {} // { filename: [{ id, text, category, timestamp }] }
+};
+
+let files = [];
+let interactiveCard = null;
+let selectedSticky = null;
+let annoPanel = null; // currently open annotation panel element
+let addingNote = false;
+
+const CARD_W = 420;
+const CARD_H = 280;
+const IFRAME_W = 1440;
+const IFRAME_H = 900;
+const CARD_GAP = 40;
+const GROUP_GAP = 80;
+const GROUP_PAD = 24;
+
+const CATEGORIES = {
+  note:     { label: 'Note',     color: '#8b5cf6' },
+  love:     { label: 'Love',     color: '#10b981' },
+  fix:      { label: 'Fix',      color: '#ef4444' },
+  idea:     { label: 'Idea',     color: '#f59e0b' },
+  question: { label: 'Question', color: '#3b82f6' },
+};
+const CATEGORY_KEYS = Object.keys(CATEGORIES);
+
+const STICKY_COLORS = ['yellow', 'blue', 'green', 'pink', 'purple'];
+
+// ── API ──────────────────────────────────────────────────────────
+async function fetchFiles() {
+  const res = await fetch('/api/files');
+  return res.json();
+}
+
+async function loadRemoteState() {
+  const res = await fetch('/api/state');
+  const data = await res.json();
+  if (data && Object.keys(data).length > 0) return data;
+  return null;
+}
+
+let saveTimeout = null;
+function saveState() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    try {
+      await fetch('/api/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state),
+      });
+    } catch (e) { console.warn('Failed to save state:', e); }
+  }, 500);
+}
+
+// ── Canvas Engine ────────────────────────────────────────────────
+const viewport = $('#viewport');
+const canvas = $('#canvas');
+
+function updateTransform() {
+  canvas.style.transform = `translate(${state.viewport.x}px, ${state.viewport.y}px) scale(${state.viewport.zoom})`;
+  $('#zoom-display').textContent = Math.round(state.viewport.zoom * 100) + '%';
+  // Update dot grid to scale with zoom
+  const dotSize = 24 * state.viewport.zoom;
+  const offX = state.viewport.x % dotSize;
+  const offY = state.viewport.y % dotSize;
+  viewport.style.backgroundSize = `${dotSize}px ${dotSize}px`;
+  viewport.style.backgroundPosition = `${offX}px ${offY}px`;
+}
+
+function screenToCanvas(sx, sy) {
+  return {
+    x: (sx - state.viewport.x) / state.viewport.zoom,
+    y: (sy - state.viewport.y) / state.viewport.zoom,
+  };
+}
+
+function zoomTo(newZoom, screenX, screenY) {
+  const oldZoom = state.viewport.zoom;
+  newZoom = Math.min(3, Math.max(0.05, newZoom));
+  const wx = (screenX - state.viewport.x) / oldZoom;
+  const wy = (screenY - state.viewport.y) / oldZoom;
+  state.viewport.x = screenX - wx * newZoom;
+  state.viewport.y = screenY - wy * newZoom;
+  state.viewport.zoom = newZoom;
+  updateTransform();
+  saveState();
+}
+
+function fitAll() {
+  const cardEls = $$('.card', canvas);
+  const stickyEls = $$('.sticky', canvas);
+  if (cardEls.length === 0 && stickyEls.length === 0) return;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const el of [...cardEls, ...stickyEls]) {
+    const x = parseFloat(el.style.left);
+    const y = parseFloat(el.style.top);
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x + w);
+    maxY = Math.max(maxY, y + h);
+  }
+  const contentW = maxX - minX;
+  const contentH = maxY - minY;
+  const vpW = viewport.clientWidth;
+  const vpH = viewport.clientHeight;
+  const pad = 60;
+  const zoom = Math.min((vpW - pad * 2) / contentW, (vpH - pad * 2) / contentH, 1.5);
+  state.viewport.zoom = Math.max(0.05, zoom);
+  state.viewport.x = (vpW - contentW * state.viewport.zoom) / 2 - minX * state.viewport.zoom;
+  state.viewport.y = (vpH - contentH * state.viewport.zoom) / 2 - minY * state.viewport.zoom;
+  updateTransform();
+  saveState();
+}
+
+// ── Pan ──────────────────────────────────────────────────────────
+let isPanning = false;
+let panStart = { x: 0, y: 0 };
+
+viewport.addEventListener('pointerdown', (e) => {
+  if (e.target !== viewport && e.target !== canvas) return;
+  if (addingNote) {
+    const pos = screenToCanvas(e.clientX, e.clientY - 48);
+    createSticky(pos.x, pos.y);
+    setAddingNote(false);
+    return;
+  }
+  isPanning = true;
+  panStart = { x: e.clientX - state.viewport.x, y: e.clientY - state.viewport.y };
+  viewport.classList.add('panning');
+  viewport.setPointerCapture(e.pointerId);
+  closeAnnotationPanel();
+  deselectSticky();
+  exitInteractiveCard();
+});
+
+viewport.addEventListener('pointermove', (e) => {
+  if (!isPanning) return;
+  state.viewport.x = e.clientX - panStart.x;
+  state.viewport.y = e.clientY - panStart.y;
+  updateTransform();
+});
+
+viewport.addEventListener('pointerup', (e) => {
+  if (!isPanning) return;
+  isPanning = false;
+  viewport.classList.remove('panning');
+  saveState();
+});
+
+// ── Zoom (wheel) ─────────────────────────────────────────────────
+viewport.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const rect = viewport.getBoundingClientRect();
+  const screenX = e.clientX - rect.left;
+  const screenY = e.clientY - rect.top;
+  const delta = -e.deltaY * 0.001;
+  const factor = 1 + delta * (e.ctrlKey ? 3 : 1.5);
+  zoomTo(state.viewport.zoom * factor, screenX, screenY);
+}, { passive: false });
+
+// ── Double-click for sticky ──────────────────────────────────────
+viewport.addEventListener('dblclick', (e) => {
+  if (e.target !== viewport && e.target !== canvas) return;
+  const pos = screenToCanvas(e.clientX, e.clientY - 48);
+  createSticky(pos.x, pos.y);
+});
+
+// ── Card rendering ───────────────────────────────────────────────
+function createCardElement(file) {
+  const scale = CARD_W / IFRAME_W;
+  const cardH = Math.round(IFRAME_H * scale);
+
+  const div = document.createElement('div');
+  div.className = 'card';
+  div.dataset.file = file.name;
+  const pos = state.cards[file.name] || { x: 0, y: 0 };
+  div.style.left = pos.x + 'px';
+  div.style.top = pos.y + 'px';
+  div.style.setProperty('--card-w', CARD_W + 'px');
+  div.style.setProperty('--card-h', cardH + 'px');
+  div.style.setProperty('--iframe-w', IFRAME_W + 'px');
+  div.style.setProperty('--iframe-h', IFRAME_H + 'px');
+  div.style.setProperty('--iframe-scale', scale);
+
+  // Badges
+  let badges = '';
+  if (file.version != null) {
+    badges += `<span class="card-badge version">v${file.version}</span>`;
+  }
+  if (file.tabs && file.tabs.length > 1) {
+    badges += `<span class="card-badge tabs">${file.tabs.length} designs</span>`;
+  }
+
+  const annoCount = (state.annotations[file.name] || []).length;
+  const hasAnno = annoCount > 0 ? ' has-annotations' : '';
+
+  div.innerHTML = `
+    <div class="card-header">
+      <span class="card-title" title="${file.name}">${file.name}</span>
+      <div class="card-badges">${badges}</div>
+      <div class="card-actions">
+        <button class="card-action-btn anno-btn${hasAnno}" title="Annotations" data-file="${file.name}">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
+        <button class="card-action-btn open-btn" title="Open in new tab" data-file="${file.name}">
+          <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="card-iframe-wrap">
+      <div class="card-iframe-overlay"></div>
+      <iframe src="/mockup/${encodeURIComponent(file.name)}" loading="lazy" sandbox="allow-scripts"></iframe>
+    </div>
+  `;
+
+  // Card header drag
+  const header = div.querySelector('.card-header');
+  setupCardDrag(div, header, file.name);
+
+  // Click overlay to enter interactive mode
+  const overlay = div.querySelector('.card-iframe-overlay');
+  overlay.addEventListener('click', (e) => {
+    e.stopPropagation();
+    enterInteractiveCard(div);
+  });
+
+  // Annotation button
+  const annoBtn = div.querySelector('.anno-btn');
+  annoBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleAnnotationPanel(file.name, annoBtn, div);
+  });
+
+  // Open in new tab
+  const openBtn = div.querySelector('.open-btn');
+  openBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    window.open(`/mockup/${encodeURIComponent(file.name)}`, '_blank');
+  });
+
+  // Right-click context menu
+  div.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    showContextMenu(e.clientX, e.clientY, [
+      { label: 'Open in New Tab', action: () => window.open(`/mockup/${encodeURIComponent(file.name)}`, '_blank') },
+      { label: 'Annotations', shortcut: 'A', action: () => toggleAnnotationPanel(file.name, annoBtn, div) },
+      { sep: true },
+      { label: 'Reset Position', action: () => { autoLayoutSingle(file.name); saveState(); } },
+    ]);
+  });
+
+  return div;
+}
+
+function enterInteractiveCard(cardEl) {
+  if (interactiveCard) exitInteractiveCard();
+  interactiveCard = cardEl;
+  cardEl.classList.add('interactive');
+}
+
+function exitInteractiveCard() {
+  if (!interactiveCard) return;
+  interactiveCard.classList.remove('interactive');
+  interactiveCard = null;
+}
+
+// ── Card Drag ────────────────────────────────────────────────────
+function setupCardDrag(cardEl, handle, filename) {
+  let dragging = false;
+  let startX, startY, origX, origY;
+
+  handle.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.stopPropagation();
+    dragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    origX = parseFloat(cardEl.style.left);
+    origY = parseFloat(cardEl.style.top);
+    cardEl.classList.add('dragging');
+    handle.classList.add('dragging');
+    handle.setPointerCapture(e.pointerId);
+    exitInteractiveCard();
+    closeAnnotationPanel();
+  });
+
+  handle.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const dx = (e.clientX - startX) / state.viewport.zoom;
+    const dy = (e.clientY - startY) / state.viewport.zoom;
+    const newX = origX + dx;
+    const newY = origY + dy;
+    cardEl.style.left = newX + 'px';
+    cardEl.style.top = newY + 'px';
+    state.cards[filename] = { x: newX, y: newY };
+  });
+
+  handle.addEventListener('pointerup', (e) => {
+    if (!dragging) return;
+    dragging = false;
+    cardEl.classList.remove('dragging');
+    handle.classList.remove('dragging');
+    updateGroupVisuals();
+    saveState();
+  });
+}
+
+// ── Sticky Notes ─────────────────────────────────────────────────
+let stickyIdCounter = Date.now();
+
+function createSticky(x, y, text = '', color = 'yellow', id = null) {
+  id = id || 'sticky-' + (stickyIdCounter++);
+  const div = document.createElement('div');
+  div.className = 'sticky' + (color !== 'yellow' ? ` sticky-color-${color}` : '');
+  div.dataset.id = id;
+  div.style.left = x + 'px';
+  div.style.top = y + 'px';
+  div.setAttribute('contenteditable', 'true');
+  div.textContent = text || 'New note...';
+
+  div.innerHTML += `
+    <button class="sticky-delete" title="Delete note">&times;</button>
+    <div class="sticky-color-picker">
+      ${STICKY_COLORS.map(c => `<div class="sticky-color-dot" data-color="${c}" style="background:${c === 'yellow' ? '#fef3c7' : c === 'blue' ? '#dbeafe' : c === 'green' ? '#dcfce7' : c === 'pink' ? '#fce7f3' : '#f3e8ff'}"></div>`).join('')}
+    </div>
+  `;
+
+  // Track sticky in state
+  const stickyData = { id, x, y, text: text || 'New note...', color };
+  const existing = state.stickies.findIndex(s => s.id === id);
+  if (existing >= 0) state.stickies[existing] = stickyData;
+  else state.stickies.push(stickyData);
+
+  setupStickyDrag(div, id);
+  setupStickyEditing(div, id);
+
+  // Delete button
+  div.querySelector('.sticky-delete').addEventListener('click', (e) => {
+    e.stopPropagation();
+    div.remove();
+    state.stickies = state.stickies.filter(s => s.id !== id);
+    saveState();
+  });
+
+  // Color picker
+  div.querySelectorAll('.sticky-color-dot').forEach(dot => {
+    dot.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const c = dot.dataset.color;
+      div.className = 'sticky' + (c !== 'yellow' ? ` sticky-color-${c}` : '');
+      // Re-append the delete and picker (lost when className replaced)
+      const sd = state.stickies.find(s => s.id === id);
+      if (sd) sd.color = c;
+      saveState();
+    });
+  });
+
+  canvas.appendChild(div);
+
+  // Auto-focus if new
+  if (!text) {
+    div.focus();
+    // Select all text for easy replacement
+    const range = document.createRange();
+    range.selectNodeContents(div.childNodes[0]);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  saveState();
+  return div;
+}
+
+function setupStickyDrag(el, id) {
+  let dragging = false;
+  let startX, startY, origX, origY;
+
+  el.addEventListener('pointerdown', (e) => {
+    if (e.target.classList.contains('sticky-delete') || e.target.classList.contains('sticky-color-dot')) return;
+    if (el.classList.contains('editing')) return;
+    e.stopPropagation();
+    deselectSticky();
+    selectedSticky = el;
+    el.classList.add('selected');
+    dragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    origX = parseFloat(el.style.left);
+    origY = parseFloat(el.style.top);
+    el.classList.add('dragging');
+    el.setPointerCapture(e.pointerId);
+  });
+
+  el.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const dx = (e.clientX - startX) / state.viewport.zoom;
+    const dy = (e.clientY - startY) / state.viewport.zoom;
+    el.style.left = (origX + dx) + 'px';
+    el.style.top = (origY + dy) + 'px';
+  });
+
+  el.addEventListener('pointerup', (e) => {
+    if (!dragging) return;
+    dragging = false;
+    el.classList.remove('dragging');
+    const sd = state.stickies.find(s => s.id === id);
+    if (sd) {
+      sd.x = parseFloat(el.style.left);
+      sd.y = parseFloat(el.style.top);
+    }
+    saveState();
+  });
+}
+
+function setupStickyEditing(el, id) {
+  el.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    el.classList.add('editing');
+    el.focus();
+  });
+
+  el.addEventListener('blur', () => {
+    el.classList.remove('editing');
+    // Get just text content without the delete button and picker
+    const textNodes = [...el.childNodes].filter(n => n.nodeType === Node.TEXT_NODE);
+    const text = textNodes.map(n => n.textContent).join('').trim();
+    const sd = state.stickies.find(s => s.id === id);
+    if (sd) sd.text = text;
+    saveState();
+  });
+
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') el.blur();
+    e.stopPropagation(); // Don't trigger canvas shortcuts while editing
+  });
+}
+
+function deselectSticky() {
+  if (selectedSticky) {
+    selectedSticky.classList.remove('selected');
+    selectedSticky = null;
+  }
+}
+
+function setAddingNote(val) {
+  addingNote = val;
+  viewport.classList.toggle('adding-note', val);
+  $('#btn-note').classList.toggle('active', val);
+}
+
+// ── Annotations ──────────────────────────────────────────────────
+let currentAnnoCategory = 'note';
+
+function toggleAnnotationPanel(filename, anchorBtn, cardEl) {
+  if (annoPanel && annoPanel.dataset.file === filename) {
+    closeAnnotationPanel();
+    return;
+  }
+  closeAnnotationPanel();
+
+  const panel = document.createElement('div');
+  panel.className = 'anno-panel';
+  panel.dataset.file = filename;
+
+  const annos = state.annotations[filename] || [];
+
+  panel.innerHTML = `
+    <div class="anno-panel-header">
+      <span>Annotations</span>
+      <button class="anno-panel-close">&times;</button>
+    </div>
+    <div class="anno-panel-body">
+      ${annos.length === 0 ? '<div style="padding:16px;text-align:center;color:#bbb;font-size:13px;">No annotations yet</div>' :
+        annos.map(a => `
+          <div class="anno-entry" data-id="${a.id}">
+            <div class="anno-dot" style="background:${CATEGORIES[a.category]?.color || '#8b5cf6'}"></div>
+            <div>
+              <div class="anno-entry-text">${escHtml(a.text)}</div>
+              <div class="anno-entry-time">${formatTime(a.timestamp)}</div>
+            </div>
+            <button class="anno-entry-delete" data-id="${a.id}">&times;</button>
+          </div>
+        `).join('')}
+    </div>
+    <div class="anno-panel-input">
+      <div class="anno-category-select" style="background:${CATEGORIES[currentAnnoCategory].color}" title="${CATEGORIES[currentAnnoCategory].label}"></div>
+      <textarea class="anno-text-input" placeholder="Add a note..." rows="1"></textarea>
+      <button class="anno-add-btn">+</button>
+    </div>
+  `;
+
+  // Position panel relative to card
+  const cardRect = cardEl.getBoundingClientRect();
+  panel.style.position = 'fixed';
+  panel.style.left = (cardRect.right + 8) + 'px';
+  panel.style.top = cardRect.top + 'px';
+
+  // Keep in viewport
+  document.body.appendChild(panel);
+  const panelRect = panel.getBoundingClientRect();
+  if (panelRect.right > window.innerWidth - 8) {
+    panel.style.left = (cardRect.left - panelRect.width - 8) + 'px';
+  }
+  if (panelRect.bottom > window.innerHeight - 8) {
+    panel.style.top = (window.innerHeight - panelRect.height - 8) + 'px';
+  }
+
+  annoPanel = panel;
+
+  // Wire close
+  panel.querySelector('.anno-panel-close').addEventListener('click', closeAnnotationPanel);
+
+  // Wire delete buttons
+  panel.querySelectorAll('.anno-entry-delete').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      state.annotations[filename] = (state.annotations[filename] || []).filter(a => a.id !== id);
+      saveState();
+      updateAnnoButton(filename);
+      // Re-render
+      toggleAnnotationPanel(filename, anchorBtn, cardEl);
+    });
+  });
+
+  // Wire category cycle
+  const catBtn = panel.querySelector('.anno-category-select');
+  catBtn.addEventListener('click', () => {
+    const idx = CATEGORY_KEYS.indexOf(currentAnnoCategory);
+    currentAnnoCategory = CATEGORY_KEYS[(idx + 1) % CATEGORY_KEYS.length];
+    catBtn.style.background = CATEGORIES[currentAnnoCategory].color;
+    catBtn.title = CATEGORIES[currentAnnoCategory].label;
+  });
+
+  // Wire add
+  const input = panel.querySelector('.anno-text-input');
+  const addBtn = panel.querySelector('.anno-add-btn');
+  function addAnnotation() {
+    const text = input.value.trim();
+    if (!text) return;
+    if (!state.annotations[filename]) state.annotations[filename] = [];
+    state.annotations[filename].push({
+      id: 'a-' + Date.now(),
+      text,
+      category: currentAnnoCategory,
+      timestamp: new Date().toISOString(),
+    });
+    input.value = '';
+    saveState();
+    updateAnnoButton(filename);
+    // Re-render panel
+    toggleAnnotationPanel(filename, anchorBtn, cardEl);
+  }
+  addBtn.addEventListener('click', addAnnotation);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addAnnotation(); }
+    e.stopPropagation();
+  });
+
+  // Prevent clicks from closing
+  panel.addEventListener('pointerdown', (e) => e.stopPropagation());
+  panel.addEventListener('click', (e) => e.stopPropagation());
+
+  // Focus input
+  setTimeout(() => input.focus(), 50);
+}
+
+function closeAnnotationPanel() {
+  if (annoPanel) {
+    annoPanel.remove();
+    annoPanel = null;
+  }
+}
+
+function updateAnnoButton(filename) {
+  const btn = $(`.anno-btn[data-file="${CSS.escape(filename)}"]`);
+  if (btn) {
+    const count = (state.annotations[filename] || []).length;
+    btn.classList.toggle('has-annotations', count > 0);
+  }
+}
+
+// ── Context Menu ─────────────────────────────────────────────────
+const ctxMenu = $('#context-menu');
+
+function showContextMenu(x, y, items) {
+  ctxMenu.innerHTML = items.map(item => {
+    if (item.sep) return '<div class="ctx-sep"></div>';
+    const cls = item.danger ? ' danger' : '';
+    const shortcut = item.shortcut ? `<span class="ctx-shortcut">${item.shortcut}</span>` : '';
+    return `<div class="ctx-item${cls}" data-idx="${items.indexOf(item)}">${item.label}${shortcut}</div>`;
+  }).join('');
+  ctxMenu.style.left = x + 'px';
+  ctxMenu.style.top = y + 'px';
+  ctxMenu.classList.add('show');
+
+  ctxMenu.querySelectorAll('.ctx-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.idx);
+      if (items[idx]?.action) items[idx].action();
+      ctxMenu.classList.remove('show');
+    });
+  });
+}
+
+document.addEventListener('click', () => ctxMenu.classList.remove('show'));
+document.addEventListener('contextmenu', (e) => {
+  if (!e.target.closest('.card') && e.target !== viewport && e.target !== canvas) return;
+});
+
+// ── Version Groups ───────────────────────────────────────────────
+function getGroups() {
+  const groups = {};
+  for (const f of files) {
+    if (f.group) {
+      if (!groups[f.group]) groups[f.group] = [];
+      groups[f.group].push(f.name);
+    }
+  }
+  // Only return groups with 2+ members
+  return Object.fromEntries(Object.entries(groups).filter(([_, v]) => v.length > 1));
+}
+
+function updateGroupVisuals() {
+  $$('.version-group', canvas).forEach(el => el.remove());
+  const groups = getGroups();
+  for (const [groupName, fileNames] of Object.entries(groups)) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const fn of fileNames) {
+      const cardEl = $(`.card[data-file="${CSS.escape(fn)}"]`, canvas);
+      if (!cardEl) continue;
+      const x = parseFloat(cardEl.style.left);
+      const y = parseFloat(cardEl.style.top);
+      const w = cardEl.offsetWidth;
+      const h = cardEl.offsetHeight;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x + w);
+      maxY = Math.max(maxY, y + h);
+    }
+    if (minX === Infinity) continue;
+    const groupEl = document.createElement('div');
+    groupEl.className = 'version-group';
+    groupEl.style.left = (minX - GROUP_PAD) + 'px';
+    groupEl.style.top = (minY - GROUP_PAD - 8) + 'px';
+    groupEl.style.width = (maxX - minX + GROUP_PAD * 2) + 'px';
+    groupEl.style.height = (maxY - minY + GROUP_PAD * 2 + 8) + 'px';
+    groupEl.innerHTML = `<span class="version-group-label">${escHtml(groupName)}</span>`;
+    canvas.insertBefore(groupEl, canvas.firstChild);
+  }
+}
+
+// ── Auto-Layout ──────────────────────────────────────────────────
+function autoLayout() {
+  const groups = getGroups();
+  const grouped = new Set(Object.values(groups).flat());
+  const ungrouped = files.filter(f => !grouped.has(f.name));
+
+  let cursorX = 60;
+  let cursorY = 60;
+  const scale = CARD_W / IFRAME_W;
+  const cardH = Math.round(IFRAME_H * scale) + 36; // +header
+
+  // Layout groups first
+  for (const [groupName, fileNames] of Object.entries(groups)) {
+    for (let i = 0; i < fileNames.length; i++) {
+      state.cards[fileNames[i]] = { x: cursorX + i * (CARD_W + CARD_GAP), y: cursorY };
+    }
+    cursorX += fileNames.length * (CARD_W + CARD_GAP) + GROUP_GAP;
+  }
+
+  // Layout ungrouped in a grid
+  if (ungrouped.length > 0) {
+    if (Object.keys(groups).length > 0) {
+      cursorX = 60;
+      cursorY += cardH + GROUP_GAP;
+    }
+    const cols = Math.max(1, Math.floor((viewport.clientWidth - 120) / (CARD_W + CARD_GAP)));
+    ungrouped.forEach((f, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      state.cards[f.name] = {
+        x: cursorX + col * (CARD_W + CARD_GAP),
+        y: cursorY + row * (cardH + CARD_GAP),
+      };
+    });
+  }
+
+  // Apply positions to DOM
+  for (const f of files) {
+    const cardEl = $(`.card[data-file="${CSS.escape(f.name)}"]`, canvas);
+    if (cardEl && state.cards[f.name]) {
+      cardEl.style.left = state.cards[f.name].x + 'px';
+      cardEl.style.top = state.cards[f.name].y + 'px';
+    }
+  }
+
+  updateGroupVisuals();
+  saveState();
+  setTimeout(fitAll, 50);
+}
+
+function autoLayoutSingle(filename) {
+  const idx = files.findIndex(f => f.name === filename);
+  if (idx < 0) return;
+  const scale = CARD_W / IFRAME_W;
+  const cardH = Math.round(IFRAME_H * scale) + 36;
+  const cols = Math.max(1, Math.floor((viewport.clientWidth - 120) / (CARD_W + CARD_GAP)));
+  const col = idx % cols;
+  const row = Math.floor(idx / cols);
+  state.cards[filename] = { x: 60 + col * (CARD_W + CARD_GAP), y: 60 + row * (cardH + CARD_GAP) };
+  const cardEl = $(`.card[data-file="${CSS.escape(filename)}"]`, canvas);
+  if (cardEl) {
+    cardEl.style.left = state.cards[filename].x + 'px';
+    cardEl.style.top = state.cards[filename].y + 'px';
+  }
+  updateGroupVisuals();
+}
+
+// ── File Loading & Rendering ─────────────────────────────────────
+async function loadFiles() {
+  files = await fetchFiles();
+  $('#file-count').textContent = `${files.length} file${files.length !== 1 ? 's' : ''}`;
+  $('#empty-state').classList.toggle('show', files.length === 0);
+  renderCards();
+}
+
+function renderCards() {
+  // Remove cards for files that no longer exist
+  $$('.card', canvas).forEach(el => {
+    if (!files.find(f => f.name === el.dataset.file)) el.remove();
+  });
+
+  const needsLayout = [];
+  for (const f of files) {
+    let cardEl = $(`.card[data-file="${CSS.escape(f.name)}"]`, canvas);
+    if (!cardEl) {
+      cardEl = createCardElement(f);
+      canvas.appendChild(cardEl);
+      if (!state.cards[f.name]) needsLayout.push(f.name);
+    }
+    // Apply saved position
+    if (state.cards[f.name]) {
+      cardEl.style.left = state.cards[f.name].x + 'px';
+      cardEl.style.top = state.cards[f.name].y + 'px';
+    }
+  }
+
+  // Auto-layout only new cards that have no saved position
+  if (needsLayout.length === files.length && files.length > 0) {
+    autoLayout();
+  } else {
+    for (const fn of needsLayout) {
+      autoLayoutSingle(fn);
+    }
+    updateGroupVisuals();
+  }
+}
+
+// ── SSE (live reload) ────────────────────────────────────────────
+function connectSSE() {
+  const evtSource = new EventSource('/api/events');
+  evtSource.addEventListener('files-changed', async (e) => {
+    const data = JSON.parse(e.data);
+    await loadFiles();
+    // Flash the changed card
+    const cardEl = $(`.card[data-file="${CSS.escape(data.file)}"]`, canvas);
+    if (cardEl) {
+      // Reload iframe
+      const iframe = cardEl.querySelector('iframe');
+      if (iframe) iframe.src = iframe.src;
+      cardEl.classList.add('flash-update');
+      setTimeout(() => cardEl.classList.remove('flash-update'), 1200);
+    }
+  });
+  evtSource.onerror = () => {
+    evtSource.close();
+    setTimeout(connectSSE, 3000);
+  };
+}
+
+// ── Keyboard Shortcuts ───────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  // Don't handle shortcuts when typing in inputs
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
+
+  switch (e.key) {
+    case '1':
+      fitAll();
+      break;
+    case '0':
+      zoomTo(1, viewport.clientWidth / 2, viewport.clientHeight / 2);
+      break;
+    case 'l':
+    case 'L':
+      autoLayout();
+      break;
+    case 'n':
+    case 'N':
+      setAddingNote(!addingNote);
+      break;
+    case 'Escape':
+      exitInteractiveCard();
+      closeAnnotationPanel();
+      deselectSticky();
+      setAddingNote(false);
+      ctxMenu.classList.remove('show');
+      break;
+    case 'Delete':
+    case 'Backspace':
+      if (selectedSticky) {
+        const id = selectedSticky.dataset.id;
+        selectedSticky.remove();
+        state.stickies = state.stickies.filter(s => s.id !== id);
+        selectedSticky = null;
+        saveState();
+      }
+      break;
+    case '+':
+    case '=':
+      zoomTo(state.viewport.zoom * 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2);
+      break;
+    case '-':
+    case '_':
+      zoomTo(state.viewport.zoom / 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2);
+      break;
+  }
+});
+
+// ── Toolbar buttons ──────────────────────────────────────────────
+$('#btn-layout').addEventListener('click', autoLayout);
+$('#btn-fit').addEventListener('click', fitAll);
+$('#btn-zoom-in').addEventListener('click', () => zoomTo(state.viewport.zoom * 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2));
+$('#btn-zoom-out').addEventListener('click', () => zoomTo(state.viewport.zoom / 1.2, viewport.clientWidth / 2, viewport.clientHeight / 2));
+$('#btn-note').addEventListener('click', () => setAddingNote(!addingNote));
+
+// ── Welcome ──────────────────────────────────────────────────────
+function showWelcome() {
+  const dismissed = localStorage.getItem('canvas-welcome-dismissed');
+  if (dismissed) return;
+  const welcome = $('#welcome');
+  welcome.classList.remove('hidden');
+  $('#welcome-dismiss').addEventListener('click', () => {
+    welcome.classList.add('hidden');
+    localStorage.setItem('canvas-welcome-dismissed', '1');
+  });
+}
+
+// ── Utilities ────────────────────────────────────────────────────
+function escHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function formatTime(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  } catch { return ''; }
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+async function init() {
+  // Load saved state
+  const saved = await loadRemoteState();
+  if (saved) {
+    if (saved.viewport) Object.assign(state.viewport, saved.viewport);
+    if (saved.cards) Object.assign(state.cards, saved.cards);
+    if (saved.stickies) state.stickies = saved.stickies;
+    if (saved.annotations) Object.assign(state.annotations, saved.annotations);
+  }
+
+  updateTransform();
+
+  // Load files and render cards
+  await loadFiles();
+
+  // Restore stickies
+  for (const s of state.stickies) {
+    createSticky(s.x, s.y, s.text, s.color || 'yellow', s.id);
+  }
+
+  // Connect SSE for live updates
+  connectSSE();
+
+  // Show welcome on first visit
+  showWelcome();
+
+  // Fit all if no saved viewport
+  if (!saved || !saved.viewport) {
+    setTimeout(fitAll, 100);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

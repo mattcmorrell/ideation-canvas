@@ -1,0 +1,6 @@
+node_modules/
+.canvas-state.json
+screenshots/
+.DS_Store
+feedback/
+test-mockups/
